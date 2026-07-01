@@ -1,0 +1,26 @@
+{
+  "packageId": "com.deucarian.ui",
+  "displayName": "Deucarian UI",
+  "ownedCapabilities": [
+    "ui-presentation-primitives",
+    "ui-motion"
+  ],
+  "runtimeAssemblies": [
+    "Deucarian.UI"
+  ],
+  "editorAssemblies": [],
+  "sampleAssemblies": [],
+  "testAssemblies": [
+    "Deucarian.UI.Tests.EditMode"
+  ],
+  "requiredDependencies": [
+    "com.deucarian.common",
+    "com.deucarian.theming",
+    "com.unity.modules.uielements",
+    "com.unity.ugui"
+  ],
+  "optionalVersionDefinedDependencies": [],
+  "allowedDirectDebugCalls": [],
+  "allowedDirectUnityObjectLifetimeCalls": [],
+  "expectedSamplesRoot": ""
+}

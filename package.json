@@ -1,0 +1,28 @@
+{
+  "name": "com.deucarian.ui",
+  "version": "0.1.0",
+  "displayName": "Deucarian UI",
+  "description": "Reusable Deucarian UI motion, glass, icon, control island, and UI Toolkit/uGUI presentation primitives.",
+  "unity": "2022.3",
+  "author": {
+    "name": "Deucarian"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deucarian/UI.git"
+  },
+  "keywords": [
+    "deucarian",
+    "ui",
+    "motion",
+    "glass",
+    "uitoolkit",
+    "ugui"
+  ],
+  "dependencies": {
+    "com.deucarian.common": "0.2.0",
+    "com.deucarian.theming": "1.0.0",
+    "com.unity.ugui": "1.0.0",
+    "com.unity.modules.uielements": "1.0.0"
+  }
+}

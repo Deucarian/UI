@@ -1,0 +1,19 @@
+{
+  "name": "Deucarian.UI",
+  "rootNamespace": "Deucarian.UI",
+  "references": [
+    "Deucarian.Common",
+    "Deucarian.Theming",
+    "UnityEngine.UI",
+    "UnityEngine.UIElementsModule"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
