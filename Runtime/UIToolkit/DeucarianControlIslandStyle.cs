@@ -5,43 +5,122 @@ namespace Deucarian.UI
 {
     public readonly struct DeucarianPanelChrome
     {
-        public DeucarianPanelChrome(float height, float cornerRadius, float horizontalPadding, float verticalPadding)
+        public DeucarianPanelChrome(
+            float height,
+            float cornerRadius,
+            float horizontalPadding,
+            float verticalPadding,
+            float minWidth = 0f)
         {
             Height = height;
             CornerRadius = cornerRadius;
             HorizontalPadding = horizontalPadding;
             VerticalPadding = verticalPadding;
+            MinWidth = minWidth;
         }
 
         public float Height { get; }
         public float CornerRadius { get; }
         public float HorizontalPadding { get; }
         public float VerticalPadding { get; }
+        public float MinWidth { get; }
     }
 
     public readonly struct DeucarianIconButtonChrome
     {
-        public DeucarianIconButtonChrome(float size, float cornerRadius, float iconSize, float horizontalMargin)
+        public DeucarianIconButtonChrome(
+            float size,
+            float cornerRadius,
+            float iconSize,
+            float horizontalMargin,
+            bool iconAbsoluteCentered = false)
         {
             Size = size;
             CornerRadius = cornerRadius;
             IconSize = iconSize;
             HorizontalMargin = horizontalMargin;
+            IconAbsoluteCentered = iconAbsoluteCentered;
         }
 
         public float Size { get; }
         public float CornerRadius { get; }
         public float IconSize { get; }
         public float HorizontalMargin { get; }
+        public bool IconAbsoluteCentered { get; }
     }
 
     public static class DeucarianControlIslandStyle
     {
+        public const float DefaultRowHeight = 40f;
+        public const float DefaultButtonSize = 32f;
+        public const float DefaultIconSize = 18f;
+        public const float DefaultButtonMargin = 4f;
+        public const float DefaultPanelCornerRadius = 16f;
+        public const float DefaultButtonCornerRadius = 11f;
+        public const float DefaultHorizontalPadding = 0f;
+        public const float DefaultVerticalPadding = 4f;
+        public const float DefaultRowGap = 8f;
+        public const float DefaultBottomOffset = 56f;
+        public const float DefaultStatusWidth = 180f;
+        public const float DefaultStatusHeight = 20f;
+        public const float DefaultStatusFontSize = 11f;
+        public const float DefaultCompactScrubberWidth = 112f;
+        public const float DefaultCompactScrubberHorizontalMargin = 5f;
+        public const float DefaultCompactScrubberChromeInset = 2f;
+
         public static readonly DeucarianPanelChrome CompactPanel =
-            new DeucarianPanelChrome(40f, 16f, 0f, 4f);
+            new DeucarianPanelChrome(
+                DefaultRowHeight,
+                DefaultPanelCornerRadius,
+                DefaultHorizontalPadding,
+                DefaultVerticalPadding);
 
         public static readonly DeucarianIconButtonChrome RoundedSquareButton =
-            new DeucarianIconButtonChrome(32f, 11f, 18f, 4f);
+            new DeucarianIconButtonChrome(
+                DefaultButtonSize,
+                DefaultButtonCornerRadius,
+                DefaultIconSize,
+                DefaultButtonMargin);
+
+        public static float ResolveStackedBottomPadding(
+            int rowIndex,
+            float bottomOffset = DefaultBottomOffset,
+            float rowHeight = DefaultRowHeight,
+            float rowGap = DefaultRowGap)
+        {
+            int safeRowIndex = Mathf.Max(0, rowIndex);
+            return bottomOffset + safeRowIndex * (rowHeight + rowGap);
+        }
+
+        public static float ResolveStackedStatusBottomPadding(
+            int rowIndex,
+            float bottomOffset = DefaultBottomOffset,
+            float rowHeight = DefaultRowHeight,
+            float rowGap = DefaultRowGap)
+        {
+            return ResolveStackedBottomPadding(rowIndex, bottomOffset, rowHeight, rowGap)
+                   + rowHeight
+                   + rowGap;
+        }
+
+        public static float CalculateCompactScrubberHeight(
+            float buttonSize = DefaultButtonSize,
+            float chromeInset = DefaultCompactScrubberChromeInset)
+        {
+            return Mathf.Max(0f, buttonSize - chromeInset * 2f);
+        }
+
+        public static float CalculateControlRowWidth(
+            DeucarianPanelChrome panel,
+            DeucarianIconButtonChrome button,
+            int buttonCount,
+            float extraContentWidth = 0f,
+            float extraHorizontalMargin = 0f)
+        {
+            return CalculatePanelWidth(panel, button, buttonCount)
+                   + Mathf.Max(0f, extraContentWidth)
+                   + Mathf.Max(0f, extraHorizontalMargin) * 2f;
+        }
 
         public static void ApplyPanel(VisualElement panel, DeucarianPanelChrome chrome)
         {
@@ -63,6 +142,11 @@ namespace Deucarian.UI
             panel.style.paddingBottom = chrome.VerticalPadding;
             panel.style.flexGrow = 0f;
             panel.style.flexShrink = 0f;
+            if (chrome.MinWidth > 0f)
+            {
+                panel.style.minWidth = chrome.MinWidth;
+            }
+
             ApplyRadius(panel, chrome.CornerRadius);
         }
 

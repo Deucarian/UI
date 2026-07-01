@@ -72,5 +72,79 @@ namespace Deucarian.UI.Tests
 
             Assert.That(width, Is.EqualTo(160f).Within(0.0001f));
         }
+
+        [Test]
+        public void IconButtonPaletteResolvesStatefulColors()
+        {
+            DeucarianIconButtonPalette palette = new DeucarianIconButtonPalette(
+                Color.black,
+                Color.gray,
+                Color.red,
+                Color.green,
+                Color.blue,
+                Color.white,
+                Color.cyan,
+                Color.magenta,
+                Color.yellow,
+                Color.clear,
+                Color.grey,
+                Color.white);
+
+            DeucarianIconButtonVisualState selected =
+                new DeucarianIconButtonVisualState(true, true, true, false, false, false);
+            DeucarianIconButtonVisualState disabled =
+                new DeucarianIconButtonVisualState(true, false, true, true, true, true);
+
+            Assert.AreEqual(Color.green, palette.ResolveBackground(selected));
+            Assert.AreEqual(Color.yellow, palette.ResolveIcon(selected));
+            Assert.AreEqual(Color.blue, palette.ResolveBackground(disabled));
+            Assert.AreEqual(Color.clear, palette.ResolveIcon(disabled));
+        }
+
+        [Test]
+        public void ScrubberStyleAppliesStableCompactGeometry()
+        {
+            VisualElement scrubber = new VisualElement();
+            VisualElement track = new VisualElement();
+            VisualElement fill = new VisualElement();
+            VisualElement handle = new VisualElement();
+            DeucarianScrubberPalette palette = new DeucarianScrubberPalette(
+                Color.black,
+                Color.gray,
+                Color.green,
+                Color.white,
+                Color.cyan);
+
+            DeucarianScrubberStyle.Apply(
+                scrubber,
+                track,
+                fill,
+                handle,
+                DeucarianScrubberMetrics.Compact,
+                palette,
+                new DeucarianScrubberVisualState(true, true, false, false));
+
+            Assert.That(scrubber.style.paddingLeft.value.value, Is.EqualTo(8f).Within(0.0001f));
+            Assert.That(track.style.height.value.value, Is.EqualTo(5f).Within(0.0001f));
+            Assert.That(handle.style.width.value.value, Is.EqualTo(14f).Within(0.0001f));
+            Assert.That(handle.style.scale.value.value.x, Is.EqualTo(1.06f).Within(0.0001f));
+        }
+
+        [Test]
+        public void ControlIslandPresetExposesDefaultFrostedControlMetrics()
+        {
+            DeucarianControlIslandPreset preset = ScriptableObject.CreateInstance<DeucarianControlIslandPreset>();
+            try
+            {
+                Assert.That(preset.RowHeight, Is.EqualTo(40f).Within(0.0001f));
+                Assert.That(preset.ButtonSize, Is.EqualTo(32f).Within(0.0001f));
+                Assert.That(preset.CompactScrubberHeight, Is.EqualTo(28f).Within(0.0001f));
+                Assert.That(preset.ResolveBottomPadding(2), Is.EqualTo(152f).Within(0.0001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(preset);
+            }
+        }
     }
 }

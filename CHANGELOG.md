@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 - 2026-07-01
+
+- Added reusable icon button visual state, palette, and interaction helpers.
+- Added reusable compact scrubber metrics, palette, and state application helpers.
+- Added a frosted control island preset ScriptableObject and package sample assets.
+- Expanded control island defaults for stacked rows, status labels, and compact scrubber sizing.
+
 ## 0.1.0 - 2026-07-01
 
 - Created the initial `com.deucarian.ui` package.

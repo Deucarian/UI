@@ -6,9 +6,10 @@ Deucarian UI provides reusable runtime UI presentation primitives for Deucarian 
 
 Package ID: `com.deucarian.ui`
 
-Current package version: `0.1.0`.
+Current package version: `0.2.0`.
 
-The package owns shared UI motion, glass panel application, icon swap behavior, icon button layout, control island geometry, and lightweight scrubber chrome.
+The package owns shared UI motion, glass panel application, icon swap behavior, icon button layout,
+control island geometry, icon button interaction state, and lightweight scrubber chrome.
 
 ## Installation
 
@@ -36,6 +37,14 @@ For development builds, use:
 - `DeucarianUIToolkitGlassPanel`: applies Deucarian frosted glass style to UI Toolkit panels.
 - `DeucarianUGUIGlassPanel`: applies Deucarian frosted glass style to uGUI images/graphics.
 - `DeucarianControlIslandStyle`: reusable compact control island and icon button geometry.
+- `DeucarianIconButtonStyle`: reusable icon button visual state, palette, interaction, and state application helpers.
+- `DeucarianScrubberStyle`: reusable compact scrubber metrics, palette, and state application helpers.
+- `DeucarianControlIslandPreset`: ScriptableObject defaults for control island geometry.
+
+## Samples
+
+- `Samples~/Frosted Control Island`: default frosted control island preset for rounded-square icon buttons,
+  compact stacked rows, and compact scrubber sizing.
 
 ## Notes
 
