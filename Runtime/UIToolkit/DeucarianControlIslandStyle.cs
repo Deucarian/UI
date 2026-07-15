@@ -161,13 +161,22 @@ namespace Deucarian.UI
 
         public static void ApplyIconButton(Button button, DeucarianIconButtonChrome chrome)
         {
-            ApplyIconButton(button, chrome, null);
+            ApplyIconButton(button, chrome, null, 0f);
         }
 
         public static void ApplyIconButton(
             Button button,
             DeucarianIconButtonChrome chrome,
             DeucarianThemeStyle style)
+        {
+            ApplyIconButton(button, chrome, style, DefaultVerticalPadding);
+        }
+
+        public static void ApplyIconButton(
+            Button button,
+            DeucarianIconButtonChrome chrome,
+            DeucarianThemeStyle style,
+            float containerInset)
         {
             if (button == null)
             {
@@ -192,7 +201,9 @@ namespace Deucarian.UI
             button.style.paddingBottom = 0f;
             button.style.flexGrow = 0f;
             button.style.flexShrink = 0f;
-            ApplyRadius(button, ResolveCornerRadius(chrome.CornerRadius, style));
+            ApplyRadius(
+                button,
+                ResolveIconButtonCornerRadius(chrome.CornerRadius, style, containerInset));
         }
 
         public static void ApplyIcon(VisualElement icon, DeucarianIconButtonChrome chrome, bool absoluteCentered)
@@ -231,6 +242,11 @@ namespace Deucarian.UI
             return panel.HorizontalPadding * 2f + safeCount * (button.Size + button.HorizontalMargin * 2f);
         }
 
+        public static float ResolveNestedCornerRadius(float outerCornerRadius, float inset)
+        {
+            return Mathf.Max(0f, outerCornerRadius - Mathf.Max(0f, inset));
+        }
+
         private static void ApplyRadius(VisualElement element, float radius)
         {
             element.style.borderTopLeftRadius = radius;
@@ -242,6 +258,16 @@ namespace Deucarian.UI
         private static float ResolveCornerRadius(float chromeCornerRadius, DeucarianThemeStyle style)
         {
             return style != null ? style.CornerRadius : chromeCornerRadius;
+        }
+
+        private static float ResolveIconButtonCornerRadius(
+            float chromeCornerRadius,
+            DeucarianThemeStyle style,
+            float containerInset)
+        {
+            return style != null
+                ? ResolveNestedCornerRadius(style.CornerRadius, containerInset)
+                : chromeCornerRadius;
         }
     }
 }

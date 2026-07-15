@@ -74,10 +74,13 @@ namespace Deucarian.UI.Tests
             Assert.That(width, Is.EqualTo(160f).Within(0.0001f));
         }
 
-        [TestCase(DeucarianThemeStyleIds.FrostedGlass, 16f)]
-        [TestCase(DeucarianThemeStyleIds.FluentAcrylic, 8f)]
-        [TestCase(DeucarianThemeStyleIds.MaterialDark, 4f)]
-        public void ControlIslandUsesThemeStyleCornerRadius(string styleId, float expectedRadius)
+        [TestCase(DeucarianThemeStyleIds.FrostedGlass, 16f, 12f)]
+        [TestCase(DeucarianThemeStyleIds.FluentAcrylic, 8f, 4f)]
+        [TestCase(DeucarianThemeStyleIds.MaterialDark, 4f, 0f)]
+        public void ControlIslandUsesConcentricThemeStyleCornerRadii(
+            string styleId,
+            float expectedPanelRadius,
+            float expectedButtonRadius)
         {
             DeucarianThemeStyle style = DeucarianThemeStylePresets.CreateRuntimeStyle(styleId);
             try
@@ -94,8 +97,31 @@ namespace Deucarian.UI.Tests
                     DeucarianControlIslandStyle.RoundedSquareButton,
                     style);
 
-                AssertCornerRadius(panel, expectedRadius);
-                AssertCornerRadius(button, expectedRadius);
+                AssertCornerRadius(panel, expectedPanelRadius);
+                AssertCornerRadius(button, expectedButtonRadius);
+            }
+            finally
+            {
+                Object.DestroyImmediate(style);
+            }
+        }
+
+        [Test]
+        public void ControlIslandSupportsCustomNestedButtonInset()
+        {
+            DeucarianThemeStyle style = DeucarianThemeStylePresets.CreateRuntimeStyle(
+                DeucarianThemeStyleIds.FrostedGlass);
+            try
+            {
+                Button button = new Button();
+
+                DeucarianControlIslandStyle.ApplyIconButton(
+                    button,
+                    DeucarianControlIslandStyle.RoundedSquareButton,
+                    style,
+                    6f);
+
+                AssertCornerRadius(button, 10f);
             }
             finally
             {
