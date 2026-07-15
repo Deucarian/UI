@@ -1,3 +1,4 @@
+using Deucarian.Theming;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -129,6 +130,48 @@ namespace Deucarian.UI
             DeucarianScrubberPalette palette,
             DeucarianScrubberVisualState state)
         {
+            Apply(scrubber, track, fill, handle, metrics, palette, state, null, 0f);
+        }
+
+        /// <summary>
+        /// Applies scrubber chrome using the supplied theme stroke and a concentric direct-child radius.
+        /// </summary>
+        public static void Apply(
+            VisualElement scrubber,
+            VisualElement track,
+            VisualElement fill,
+            VisualElement handle,
+            DeucarianScrubberMetrics metrics,
+            DeucarianScrubberPalette palette,
+            DeucarianScrubberVisualState state,
+            DeucarianThemeStyle style)
+        {
+            Apply(
+                scrubber,
+                track,
+                fill,
+                handle,
+                metrics,
+                palette,
+                state,
+                style,
+                DeucarianControlIslandStyle.DefaultVerticalPadding);
+        }
+
+        /// <summary>
+        /// Applies scrubber chrome using the supplied theme stroke and explicit container inset.
+        /// </summary>
+        public static void Apply(
+            VisualElement scrubber,
+            VisualElement track,
+            VisualElement fill,
+            VisualElement handle,
+            DeucarianScrubberMetrics metrics,
+            DeucarianScrubberPalette palette,
+            DeucarianScrubberVisualState state,
+            DeucarianThemeStyle style,
+            float containerInset)
+        {
             if (scrubber == null)
             {
                 return;
@@ -146,12 +189,23 @@ namespace Deucarian.UI
             scrubber.style.paddingBottom = metrics.VerticalPadding;
             scrubber.style.scale = new Scale(Vector3.one);
             scrubber.style.overflow = Overflow.Visible;
-            ApplyCornerRadius(scrubber, metrics.CornerRadius);
-            ApplyElementBorder(scrubber, metrics.BorderWidth, palette.Border);
+            float scrubberRadius = style != null
+                ? DeucarianControlIslandStyle.ResolveNestedCornerRadius(
+                    style.CornerRadius,
+                    containerInset)
+                : metrics.CornerRadius;
+            float borderWidth = style != null
+                ? Mathf.Max(0f, style.BorderWidth)
+                : metrics.BorderWidth;
+            Color borderColor = style != null
+                ? style.ResolveBorderColor(palette.Border)
+                : palette.Border;
+            ApplyCornerRadius(scrubber, scrubberRadius);
+            ApplyElementBorder(scrubber, borderWidth, borderColor);
 
             ApplyTrack(track, metrics, palette);
             ApplyFill(fill, metrics, palette);
-            ApplyHandle(handle, metrics, palette, state);
+            ApplyHandle(handle, metrics, palette, state, borderWidth, borderColor);
         }
 
         private static void ApplyTrack(
@@ -206,7 +260,9 @@ namespace Deucarian.UI
             VisualElement handle,
             DeucarianScrubberMetrics metrics,
             DeucarianScrubberPalette palette,
-            DeucarianScrubberVisualState state)
+            DeucarianScrubberVisualState state,
+            float borderWidth,
+            Color borderColor)
         {
             if (handle == null)
             {
@@ -230,7 +286,7 @@ namespace Deucarian.UI
                 : state.Hovered ? metrics.HandleHoverScale : 1f;
             handle.style.scale = new Scale(new Vector3(handleScale, handleScale, 1f));
             ApplyCornerRadius(handle, metrics.HandleSize * 0.5f);
-            ApplyElementBorder(handle, metrics.BorderWidth, palette.Border);
+            ApplyElementBorder(handle, borderWidth, borderColor);
         }
 
         private static void ApplyCornerRadius(VisualElement element, float radius)

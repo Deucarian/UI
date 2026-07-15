@@ -246,6 +246,17 @@ namespace Deucarian.UI
             VisualElement scrubber,
             DeucarianControlIslandProfile profile)
         {
+            ApplyCompactScrubber(scrubber, profile, null);
+        }
+
+        /// <summary>
+        /// Applies compact scrubber geometry and resolves its direct-child radius from the supplied theme style.
+        /// </summary>
+        public static void ApplyCompactScrubber(
+            VisualElement scrubber,
+            DeucarianControlIslandProfile profile,
+            DeucarianThemeStyle style)
+        {
             if (scrubber == null)
             {
                 return;
@@ -261,6 +272,12 @@ namespace Deucarian.UI
             scrubber.style.marginRight = profile.ItemHorizontalMargin;
             scrubber.style.flexGrow = 0f;
             scrubber.style.flexShrink = 0f;
+            if (style != null)
+            {
+                ApplyRadius(
+                    scrubber,
+                    ResolveNestedCornerRadius(style.CornerRadius, profile.VerticalPadding));
+            }
         }
 
         public static float ResolveNestedCornerRadius(float outerCornerRadius, float inset)
