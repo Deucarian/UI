@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Resolve control-island sizing from semantic Comfortable, Standard, and Compact density rather than surface preset identity.
+- Resolve panel and concentric nested-control radii independently from the composed shape profile while preserving legacy style-ID fallbacks.
+- Add backward-compatible theme-style overloads for icon-button state and scrubber chrome so composed stroke width, color, Borderless behavior, and concentric control radii propagate consistently.
+
 ## 0.2.0 - 2026-07-01
 
 - Added reusable icon button visual state, palette, and interaction helpers.

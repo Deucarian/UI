@@ -1,3 +1,4 @@
+using Deucarian.Theming;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -65,7 +66,7 @@ namespace Deucarian.UI
         public const float DefaultStatusHeight = 20f;
         public const float DefaultStatusFontSize = 11f;
         public const float DefaultCompactScrubberWidth = 112f;
-        public const float DefaultCompactScrubberHorizontalMargin = 5f;
+        public const float DefaultCompactScrubberHorizontalMargin = DefaultButtonMargin;
         public const float DefaultCompactScrubberChromeInset = 2f;
 
         public static readonly DeucarianPanelChrome CompactPanel =
@@ -124,6 +125,14 @@ namespace Deucarian.UI
 
         public static void ApplyPanel(VisualElement panel, DeucarianPanelChrome chrome)
         {
+            ApplyPanel(panel, chrome, null);
+        }
+
+        public static void ApplyPanel(
+            VisualElement panel,
+            DeucarianPanelChrome chrome,
+            DeucarianThemeStyle style)
+        {
             if (panel == null)
             {
                 return;
@@ -147,10 +156,27 @@ namespace Deucarian.UI
                 panel.style.minWidth = chrome.MinWidth;
             }
 
-            ApplyRadius(panel, chrome.CornerRadius);
+            ApplyRadius(panel, ResolveCornerRadius(chrome.CornerRadius, style));
         }
 
         public static void ApplyIconButton(Button button, DeucarianIconButtonChrome chrome)
+        {
+            ApplyIconButton(button, chrome, null, 0f);
+        }
+
+        public static void ApplyIconButton(
+            Button button,
+            DeucarianIconButtonChrome chrome,
+            DeucarianThemeStyle style)
+        {
+            ApplyIconButton(button, chrome, style, DefaultVerticalPadding);
+        }
+
+        public static void ApplyIconButton(
+            Button button,
+            DeucarianIconButtonChrome chrome,
+            DeucarianThemeStyle style,
+            float containerInset)
         {
             if (button == null)
             {
@@ -175,7 +201,9 @@ namespace Deucarian.UI
             button.style.paddingBottom = 0f;
             button.style.flexGrow = 0f;
             button.style.flexShrink = 0f;
-            ApplyRadius(button, chrome.CornerRadius);
+            ApplyRadius(
+                button,
+                ResolveIconButtonCornerRadius(chrome.CornerRadius, style, containerInset));
         }
 
         public static void ApplyIcon(VisualElement icon, DeucarianIconButtonChrome chrome, bool absoluteCentered)
@@ -214,12 +242,70 @@ namespace Deucarian.UI
             return panel.HorizontalPadding * 2f + safeCount * (button.Size + button.HorizontalMargin * 2f);
         }
 
+        public static void ApplyCompactScrubber(
+            VisualElement scrubber,
+            DeucarianControlIslandProfile profile)
+        {
+            ApplyCompactScrubber(scrubber, profile, null);
+        }
+
+        /// <summary>
+        /// Applies compact scrubber geometry and resolves its direct-child radius from the supplied theme style.
+        /// </summary>
+        public static void ApplyCompactScrubber(
+            VisualElement scrubber,
+            DeucarianControlIslandProfile profile,
+            DeucarianThemeStyle style)
+        {
+            if (scrubber == null)
+            {
+                return;
+            }
+
+            scrubber.style.width = profile.CompactScrubberWidth;
+            scrubber.style.height = profile.CompactScrubberHeight;
+            scrubber.style.minWidth = profile.CompactScrubberWidth;
+            scrubber.style.minHeight = profile.CompactScrubberHeight;
+            scrubber.style.maxWidth = profile.CompactScrubberWidth;
+            scrubber.style.maxHeight = profile.CompactScrubberHeight;
+            scrubber.style.marginLeft = profile.ItemHorizontalMargin;
+            scrubber.style.marginRight = profile.ItemHorizontalMargin;
+            scrubber.style.flexGrow = 0f;
+            scrubber.style.flexShrink = 0f;
+            if (style != null)
+            {
+                ApplyRadius(
+                    scrubber,
+                    ResolveNestedCornerRadius(style.CornerRadius, profile.VerticalPadding));
+            }
+        }
+
+        public static float ResolveNestedCornerRadius(float outerCornerRadius, float inset)
+        {
+            return Mathf.Max(0f, outerCornerRadius - Mathf.Max(0f, inset));
+        }
+
         private static void ApplyRadius(VisualElement element, float radius)
         {
             element.style.borderTopLeftRadius = radius;
             element.style.borderTopRightRadius = radius;
             element.style.borderBottomLeftRadius = radius;
             element.style.borderBottomRightRadius = radius;
+        }
+
+        private static float ResolveCornerRadius(float chromeCornerRadius, DeucarianThemeStyle style)
+        {
+            return style != null ? style.CornerRadius : chromeCornerRadius;
+        }
+
+        private static float ResolveIconButtonCornerRadius(
+            float chromeCornerRadius,
+            DeucarianThemeStyle style,
+            float containerInset)
+        {
+            return style != null
+                ? ResolveNestedCornerRadius(style.CornerRadius, containerInset)
+                : chromeCornerRadius;
         }
     }
 }

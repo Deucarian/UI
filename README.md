@@ -79,7 +79,8 @@ public static class UiIslandSetup
 - `DeucarianIconSwap`: single-slot two-icon swap helper for UI Toolkit buttons.
 - `DeucarianUIToolkitGlassPanel`: applies Deucarian frosted glass style to UI Toolkit panels.
 - `DeucarianUGUIGlassPanel`: applies Deucarian frosted glass style to uGUI images/graphics.
-- `DeucarianControlIslandStyle`: reusable compact control island and icon button geometry.
+- `DeucarianControlIslandStyle`: reusable compact control island, icon button, and scrubber geometry application.
+- `DeucarianControlIslandProfile` and `DeucarianControlIslandProfiles`: Comfortable, Standard, and Compact geometry resolved from `DeucarianThemeDensity`. Legacy Frosted Glass, Fluent Acrylic, and Material Dark IDs remain supported when density is unspecified. All profiles share the same 4 px item margin and vertical inset rhythm, while panel radius resolves independently from the style's shape profile.
 - `DeucarianIconButtonStyle`: reusable icon button visual state, palette, interaction, and state application helpers.
 - `DeucarianScrubberStyle`: reusable compact scrubber metrics, palette, and state application helpers.
 - `DeucarianControlIslandPreset`: ScriptableObject defaults for control island geometry.

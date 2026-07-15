@@ -1,4 +1,5 @@
 using System;
+using Deucarian.Theming;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -268,7 +269,20 @@ namespace Deucarian.UI
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state)
         {
-            ApplyButtonState(button, palette, state);
+            ApplyState(button, icon, palette, state, null);
+        }
+
+        /// <summary>
+        /// Applies icon-button state while resolving outlined states from the supplied theme style.
+        /// </summary>
+        public static void ApplyState(
+            Button button,
+            VisualElement icon,
+            DeucarianIconButtonPalette palette,
+            DeucarianIconButtonVisualState state,
+            DeucarianThemeStyle style)
+        {
+            ApplyButtonState(button, palette, state, style);
             ApplyIconState(icon, palette, state);
         }
 
@@ -276,6 +290,18 @@ namespace Deucarian.UI
             Button button,
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state)
+        {
+            ApplyButtonState(button, palette, state, null);
+        }
+
+        /// <summary>
+        /// Applies button state while resolving active, focused, and disabled outlines from the supplied theme style.
+        /// </summary>
+        public static void ApplyButtonState(
+            Button button,
+            DeucarianIconButtonPalette palette,
+            DeucarianIconButtonVisualState state,
+            DeucarianThemeStyle style)
         {
             if (button == null)
             {
@@ -287,7 +313,7 @@ namespace Deucarian.UI
             button.style.backgroundColor = palette.ResolveBackground(state);
             button.style.color = palette.Text;
             button.style.scale = new Scale(ResolveButtonScale(state));
-            ApplyBorder(button, palette, state);
+            ApplyBorder(button, palette, state, style);
         }
 
         public static void ApplyIconState(
@@ -347,17 +373,24 @@ namespace Deucarian.UI
         private static void ApplyBorder(
             Button button,
             DeucarianIconButtonPalette palette,
-            DeucarianIconButtonVisualState state)
+            DeucarianIconButtonVisualState state,
+            DeucarianThemeStyle style)
         {
-            float width = state.Active || state.Focused
-                ? ActiveBorderWidth
-                : state.Disabled ? DisabledBorderWidth : NoBorderWidth;
+            bool outlined = state.Active || state.Focused || state.Disabled;
+            float width = style != null
+                ? outlined ? Mathf.Max(0f, style.BorderWidth) : NoBorderWidth
+                : state.Active || state.Focused
+                    ? ActiveBorderWidth
+                    : state.Disabled ? DisabledBorderWidth : NoBorderWidth;
             button.style.borderLeftWidth = width;
             button.style.borderRightWidth = width;
             button.style.borderTopWidth = width;
             button.style.borderBottomWidth = width;
 
-            Color borderColor = palette.ResolveBorder(state);
+            Color paletteBorder = palette.ResolveBorder(state);
+            Color borderColor = style != null
+                ? style.ResolveBorderColor(paletteBorder)
+                : paletteBorder;
             button.style.borderLeftColor = borderColor;
             button.style.borderRightColor = borderColor;
             button.style.borderTopColor = borderColor;

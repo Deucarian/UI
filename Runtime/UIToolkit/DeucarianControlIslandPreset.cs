@@ -22,8 +22,6 @@ namespace Deucarian.UI
         [SerializeField, Min(0f)] private float statusFontSize = DeucarianControlIslandStyle.DefaultStatusFontSize;
         [SerializeField, Min(0f)] private float compactScrubberWidth =
             DeucarianControlIslandStyle.DefaultCompactScrubberWidth;
-        [SerializeField, Min(0f)] private float compactScrubberHorizontalMargin =
-            DeucarianControlIslandStyle.DefaultCompactScrubberHorizontalMargin;
         [SerializeField, Min(0f)] private float compactScrubberChromeInset =
             DeucarianControlIslandStyle.DefaultCompactScrubberChromeInset;
 
@@ -41,7 +39,7 @@ namespace Deucarian.UI
         public float StatusHeight => statusHeight;
         public float StatusFontSize => statusFontSize;
         public float CompactScrubberWidth => compactScrubberWidth;
-        public float CompactScrubberHorizontalMargin => compactScrubberHorizontalMargin;
+        public float CompactScrubberHorizontalMargin => buttonMargin;
         public float CompactScrubberHeight =>
             DeucarianControlIslandStyle.CalculateCompactScrubberHeight(buttonSize, compactScrubberChromeInset);
 
@@ -103,7 +101,6 @@ namespace Deucarian.UI
             statusHeight = Mathf.Max(0f, statusHeight);
             statusFontSize = Mathf.Max(0f, statusFontSize);
             compactScrubberWidth = Mathf.Max(0f, compactScrubberWidth);
-            compactScrubberHorizontalMargin = Mathf.Max(0f, compactScrubberHorizontalMargin);
             compactScrubberChromeInset = Mathf.Max(0f, compactScrubberChromeInset);
         }
     }
