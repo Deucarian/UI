@@ -26,5 +26,4 @@ MonoBehaviour:
   statusHeight: 20
   statusFontSize: 11
   compactScrubberWidth: 112
-  compactScrubberHorizontalMargin: 5
   compactScrubberChromeInset: 2

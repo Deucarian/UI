@@ -66,7 +66,7 @@ namespace Deucarian.UI
         public const float DefaultStatusHeight = 20f;
         public const float DefaultStatusFontSize = 11f;
         public const float DefaultCompactScrubberWidth = 112f;
-        public const float DefaultCompactScrubberHorizontalMargin = 5f;
+        public const float DefaultCompactScrubberHorizontalMargin = DefaultButtonMargin;
         public const float DefaultCompactScrubberChromeInset = 2f;
 
         public static readonly DeucarianPanelChrome CompactPanel =
@@ -240,6 +240,27 @@ namespace Deucarian.UI
         {
             int safeCount = Mathf.Max(0, count);
             return panel.HorizontalPadding * 2f + safeCount * (button.Size + button.HorizontalMargin * 2f);
+        }
+
+        public static void ApplyCompactScrubber(
+            VisualElement scrubber,
+            DeucarianControlIslandProfile profile)
+        {
+            if (scrubber == null)
+            {
+                return;
+            }
+
+            scrubber.style.width = profile.CompactScrubberWidth;
+            scrubber.style.height = profile.CompactScrubberHeight;
+            scrubber.style.minWidth = profile.CompactScrubberWidth;
+            scrubber.style.minHeight = profile.CompactScrubberHeight;
+            scrubber.style.maxWidth = profile.CompactScrubberWidth;
+            scrubber.style.maxHeight = profile.CompactScrubberHeight;
+            scrubber.style.marginLeft = profile.ItemHorizontalMargin;
+            scrubber.style.marginRight = profile.ItemHorizontalMargin;
+            scrubber.style.flexGrow = 0f;
+            scrubber.style.flexShrink = 0f;
         }
 
         public static float ResolveNestedCornerRadius(float outerCornerRadius, float inset)
