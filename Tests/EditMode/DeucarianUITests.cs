@@ -1,4 +1,5 @@
 using Deucarian.Common;
+using Deucarian.Theming;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -73,6 +74,52 @@ namespace Deucarian.UI.Tests
             Assert.That(width, Is.EqualTo(160f).Within(0.0001f));
         }
 
+        [TestCase(DeucarianThemeStyleIds.FrostedGlass, 16f)]
+        [TestCase(DeucarianThemeStyleIds.FluentAcrylic, 8f)]
+        [TestCase(DeucarianThemeStyleIds.MaterialDark, 4f)]
+        public void ControlIslandUsesThemeStyleCornerRadius(string styleId, float expectedRadius)
+        {
+            DeucarianThemeStyle style = DeucarianThemeStylePresets.CreateRuntimeStyle(styleId);
+            try
+            {
+                VisualElement panel = new VisualElement();
+                Button button = new Button();
+
+                DeucarianControlIslandStyle.ApplyPanel(
+                    panel,
+                    DeucarianControlIslandStyle.CompactPanel,
+                    style);
+                DeucarianControlIslandStyle.ApplyIconButton(
+                    button,
+                    DeucarianControlIslandStyle.RoundedSquareButton,
+                    style);
+
+                AssertCornerRadius(panel, expectedRadius);
+                AssertCornerRadius(button, expectedRadius);
+            }
+            finally
+            {
+                Object.DestroyImmediate(style);
+            }
+        }
+
+        [Test]
+        public void ControlIslandLegacyOverloadsKeepChromeCornerRadii()
+        {
+            VisualElement panel = new VisualElement();
+            Button button = new Button();
+
+            DeucarianControlIslandStyle.ApplyPanel(
+                panel,
+                DeucarianControlIslandStyle.CompactPanel);
+            DeucarianControlIslandStyle.ApplyIconButton(
+                button,
+                DeucarianControlIslandStyle.RoundedSquareButton);
+
+            AssertCornerRadius(panel, DeucarianControlIslandStyle.DefaultPanelCornerRadius);
+            AssertCornerRadius(button, DeucarianControlIslandStyle.DefaultButtonCornerRadius);
+        }
+
         [Test]
         public void IconButtonPaletteResolvesStatefulColors()
         {
@@ -145,6 +192,14 @@ namespace Deucarian.UI.Tests
             {
                 Object.DestroyImmediate(preset);
             }
+        }
+
+        private static void AssertCornerRadius(VisualElement element, float expectedRadius)
+        {
+            Assert.That(element.style.borderTopLeftRadius.value.value, Is.EqualTo(expectedRadius).Within(0.0001f));
+            Assert.That(element.style.borderTopRightRadius.value.value, Is.EqualTo(expectedRadius).Within(0.0001f));
+            Assert.That(element.style.borderBottomLeftRadius.value.value, Is.EqualTo(expectedRadius).Within(0.0001f));
+            Assert.That(element.style.borderBottomRightRadius.value.value, Is.EqualTo(expectedRadius).Within(0.0001f));
         }
     }
 }

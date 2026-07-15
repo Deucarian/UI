@@ -1,3 +1,4 @@
+using Deucarian.Theming;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -124,6 +125,14 @@ namespace Deucarian.UI
 
         public static void ApplyPanel(VisualElement panel, DeucarianPanelChrome chrome)
         {
+            ApplyPanel(panel, chrome, null);
+        }
+
+        public static void ApplyPanel(
+            VisualElement panel,
+            DeucarianPanelChrome chrome,
+            DeucarianThemeStyle style)
+        {
             if (panel == null)
             {
                 return;
@@ -147,10 +156,18 @@ namespace Deucarian.UI
                 panel.style.minWidth = chrome.MinWidth;
             }
 
-            ApplyRadius(panel, chrome.CornerRadius);
+            ApplyRadius(panel, ResolveCornerRadius(chrome.CornerRadius, style));
         }
 
         public static void ApplyIconButton(Button button, DeucarianIconButtonChrome chrome)
+        {
+            ApplyIconButton(button, chrome, null);
+        }
+
+        public static void ApplyIconButton(
+            Button button,
+            DeucarianIconButtonChrome chrome,
+            DeucarianThemeStyle style)
         {
             if (button == null)
             {
@@ -175,7 +192,7 @@ namespace Deucarian.UI
             button.style.paddingBottom = 0f;
             button.style.flexGrow = 0f;
             button.style.flexShrink = 0f;
-            ApplyRadius(button, chrome.CornerRadius);
+            ApplyRadius(button, ResolveCornerRadius(chrome.CornerRadius, style));
         }
 
         public static void ApplyIcon(VisualElement icon, DeucarianIconButtonChrome chrome, bool absoluteCentered)
@@ -220,6 +237,11 @@ namespace Deucarian.UI
             element.style.borderTopRightRadius = radius;
             element.style.borderBottomLeftRadius = radius;
             element.style.borderBottomRightRadius = radius;
+        }
+
+        private static float ResolveCornerRadius(float chromeCornerRadius, DeucarianThemeStyle style)
+        {
+            return style != null ? style.CornerRadius : chromeCornerRadius;
         }
     }
 }
