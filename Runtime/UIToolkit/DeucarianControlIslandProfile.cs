@@ -11,6 +11,7 @@ namespace Deucarian.UI
     {
         public DeucarianControlIslandProfile(
             string styleId,
+            DeucarianThemeDensity density,
             float rowHeight,
             float buttonSize,
             float iconSize,
@@ -22,6 +23,7 @@ namespace Deucarian.UI
             float fallbackPanelCornerRadius)
         {
             StyleId = styleId ?? string.Empty;
+            Density = density;
             RowHeight = Mathf.Max(0f, rowHeight);
             ButtonSize = Mathf.Max(0f, buttonSize);
             IconSize = Mathf.Max(0f, iconSize);
@@ -33,7 +35,35 @@ namespace Deucarian.UI
             FallbackPanelCornerRadius = Mathf.Max(0f, fallbackPanelCornerRadius);
         }
 
+        /// <summary>Backward-compatible constructor for callers that supplied only a style ID.</summary>
+        public DeucarianControlIslandProfile(
+            string styleId,
+            float rowHeight,
+            float buttonSize,
+            float iconSize,
+            float compactScrubberWidth,
+            float compactScrubberHeight,
+            float itemHorizontalMargin,
+            float horizontalPadding,
+            float verticalPadding,
+            float fallbackPanelCornerRadius)
+            : this(
+                styleId,
+                DeucarianThemeDensity.Unspecified,
+                rowHeight,
+                buttonSize,
+                iconSize,
+                compactScrubberWidth,
+                compactScrubberHeight,
+                itemHorizontalMargin,
+                horizontalPadding,
+                verticalPadding,
+                fallbackPanelCornerRadius)
+        {
+        }
+
         public string StyleId { get; }
+        public DeucarianThemeDensity Density { get; }
         public float RowHeight { get; }
         public float ButtonSize { get; }
         public float IconSize { get; }
@@ -80,7 +110,8 @@ namespace Deucarian.UI
     }
 
     /// <summary>
-    /// Resolves built-in control-island profiles from stable Theming style IDs.
+    /// Resolves built-in control-island profiles from semantic Theming density intents.
+    /// Stable style IDs remain a fallback for legacy inline styles.
     /// </summary>
     public static class DeucarianControlIslandProfiles
     {
@@ -88,9 +119,10 @@ namespace Deucarian.UI
         public const float SharedHorizontalPadding = 0f;
         public const float SharedVerticalPadding = 4f;
 
-        public static readonly DeucarianControlIslandProfile FrostedGlass =
+        public static readonly DeucarianControlIslandProfile Comfortable =
             new DeucarianControlIslandProfile(
                 DeucarianThemeStyleIds.FrostedGlass,
+                DeucarianThemeDensity.Comfortable,
                 40f,
                 32f,
                 18f,
@@ -101,9 +133,10 @@ namespace Deucarian.UI
                 SharedVerticalPadding,
                 16f);
 
-        public static readonly DeucarianControlIslandProfile FluentAcrylic =
+        public static readonly DeucarianControlIslandProfile Standard =
             new DeucarianControlIslandProfile(
                 DeucarianThemeStyleIds.FluentAcrylic,
+                DeucarianThemeDensity.Standard,
                 38f,
                 30f,
                 17f,
@@ -114,9 +147,10 @@ namespace Deucarian.UI
                 SharedVerticalPadding,
                 8f);
 
-        public static readonly DeucarianControlIslandProfile MaterialDark =
+        public static readonly DeucarianControlIslandProfile Compact =
             new DeucarianControlIslandProfile(
                 DeucarianThemeStyleIds.MaterialDark,
+                DeucarianThemeDensity.Compact,
                 36f,
                 28f,
                 16f,
@@ -127,9 +161,37 @@ namespace Deucarian.UI
                 SharedVerticalPadding,
                 4f);
 
+        /// <summary>Backward-compatible alias for the Comfortable density profile.</summary>
+        public static readonly DeucarianControlIslandProfile FrostedGlass = Comfortable;
+
+        /// <summary>Backward-compatible alias for the Standard density profile.</summary>
+        public static readonly DeucarianControlIslandProfile FluentAcrylic = Standard;
+
+        /// <summary>Backward-compatible alias for the Compact density profile.</summary>
+        public static readonly DeucarianControlIslandProfile MaterialDark = Compact;
+
         public static DeucarianControlIslandProfile Resolve(DeucarianThemeStyle style)
         {
+            if (style != null && style.Density != DeucarianThemeDensity.Unspecified)
+            {
+                return Resolve(style.Density);
+            }
+
             return Resolve(style != null ? style.StyleId : null);
+        }
+
+        public static DeucarianControlIslandProfile Resolve(DeucarianThemeDensity density)
+        {
+            switch (density)
+            {
+                case DeucarianThemeDensity.Standard:
+                    return Standard;
+                case DeucarianThemeDensity.Compact:
+                    return Compact;
+                case DeucarianThemeDensity.Comfortable:
+                default:
+                    return Comfortable;
+            }
         }
 
         public static DeucarianControlIslandProfile Resolve(string styleId)
@@ -139,7 +201,7 @@ namespace Deucarian.UI
                     DeucarianThemeStyleIds.FluentAcrylic,
                     StringComparison.OrdinalIgnoreCase))
             {
-                return FluentAcrylic;
+                return Standard;
             }
 
             if (string.Equals(
@@ -147,10 +209,10 @@ namespace Deucarian.UI
                     DeucarianThemeStyleIds.MaterialDark,
                     StringComparison.OrdinalIgnoreCase))
             {
-                return MaterialDark;
+                return Compact;
             }
 
-            return FrostedGlass;
+            return Comfortable;
         }
     }
 }

@@ -116,6 +116,67 @@ namespace Deucarian.UI.Tests
                 DeucarianControlIslandProfiles.Resolve("deucarian.style.unknown").StyleId);
         }
 
+        [TestCase(DeucarianThemeDensity.Comfortable, 40f, 32f, 18f)]
+        [TestCase(DeucarianThemeDensity.Standard, 38f, 30f, 17f)]
+        [TestCase(DeucarianThemeDensity.Compact, 36f, 28f, 16f)]
+        public void ControlIslandProfilesResolveExplicitSemanticDensity(
+            DeucarianThemeDensity density,
+            float rowHeight,
+            float buttonSize,
+            float iconSize)
+        {
+            DeucarianThemeStyle style = DeucarianThemeStylePresets.CreateRuntimeStyle(
+                DeucarianThemeStyleIds.FrostedGlass);
+            try
+            {
+                style.SetComposition(null, null, null, density, true);
+
+                DeucarianControlIslandProfile profile = DeucarianControlIslandProfiles.Resolve(style);
+
+                Assert.AreEqual(density, profile.Density);
+                Assert.That(profile.RowHeight, Is.EqualTo(rowHeight).Within(0.0001f));
+                Assert.That(profile.ButtonSize, Is.EqualTo(buttonSize).Within(0.0001f));
+                Assert.That(profile.IconSize, Is.EqualTo(iconSize).Within(0.0001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(style);
+            }
+        }
+
+        [Test]
+        public void ControlIslandUsesShapeProfileWithIndependentDensity()
+        {
+            DeucarianThemeStyle style = DeucarianThemeStylePresets.CreateRuntimeStyle(
+                DeucarianThemeStyleIds.FrostedGlass);
+            DeucarianThemeShapeProfile square = ScriptableObject.CreateInstance<DeucarianThemeShapeProfile>();
+            try
+            {
+                square.Configure(
+                    DeucarianThemePresentationProfileIds.Shape.Square,
+                    "Square",
+                    "Square test shape.",
+                    0f);
+                style.SetComposition(null, square, null, DeucarianThemeDensity.Compact, true);
+                DeucarianControlIslandProfile profile = DeucarianControlIslandProfiles.Resolve(style);
+                VisualElement panel = new VisualElement();
+                Button button = new Button();
+
+                DeucarianControlIslandStyle.ApplyPanel(panel, profile.CreatePanelChrome(), style);
+                DeucarianControlIslandStyle.ApplyIconButton(button, profile.CreateIconButtonChrome(), style);
+
+                Assert.AreEqual(DeucarianThemeDensity.Compact, profile.Density);
+                Assert.That(profile.RowHeight, Is.EqualTo(36f).Within(0.0001f));
+                AssertCornerRadius(panel, 0f);
+                AssertCornerRadius(button, 0f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(square);
+                Object.DestroyImmediate(style);
+            }
+        }
+
         [Test]
         public void ControlIslandProfileAppliesSharedScrubberSpacingAndCalculatesWidth()
         {
