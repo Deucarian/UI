@@ -1,6 +1,6 @@
 {
   "name": "com.deucarian.ui",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "displayName": "Deucarian UI",
   "description": "Reusable Deucarian UI motion, glass, icon, control island, and UI Toolkit/uGUI presentation primitives.",
   "unity": "2022.3",
@@ -21,7 +21,7 @@
   ],
   "dependencies": {
     "com.deucarian.common": "0.2.0",
-    "com.deucarian.theming": "1.0.0",
+    "com.deucarian.theming": "1.0.3",
     "com.unity.ugui": "1.0.0",
     "com.unity.modules.uielements": "1.0.0"
   }
