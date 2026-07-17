@@ -1,6 +1,7 @@
 {
   "packageId": "com.deucarian.ui",
   "displayName": "Deucarian UI",
+  "samplePolicy": "playable-scene",
   "ownedCapabilities": [
     "ui-presentation-primitives",
     "ui-motion"
@@ -9,7 +10,9 @@
     "Deucarian.UI"
   ],
   "editorAssemblies": [],
-  "sampleAssemblies": [],
+  "sampleAssemblies": [
+    "Deucarian.UI.Samples.FrostedControlIsland"
+  ],
   "testAssemblies": [
     "Deucarian.UI.Tests.EditMode"
   ],
