@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 - 2026-07-17
+
+- Added an importable Frosted Control Island scene and assembly, and aligned exact Deucarian dependencies.
+
 ## Unreleased
 
 - Resolve control-island sizing from semantic Comfortable, Standard, and Compact density rather than surface preset identity.
