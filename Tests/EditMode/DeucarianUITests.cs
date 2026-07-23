@@ -35,6 +35,61 @@ namespace Deucarian.UI.Tests
         }
 
         [Test]
+        public void VisibilityTransitionAdvancesToVisibleAndNotifiesCompletion()
+        {
+            DeucarianVisibilityTransition transition =
+                new DeucarianVisibilityTransition(CreateLinearMotionProfile(2f, 4f));
+            int completionCount = 0;
+            transition.Completed += _ => completionCount++;
+
+            float duration = transition.Show();
+
+            Assert.That(duration, Is.EqualTo(2f).Within(0.0001f));
+            Assert.AreEqual(DeucarianVisibilityPhase.Entering, transition.Phase);
+            Assert.True(transition.Advance(1f));
+            Assert.That(transition.Progress, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(transition.RemainingSeconds, Is.EqualTo(1f).Within(0.0001f));
+            Assert.True(transition.Advance(1f));
+            Assert.AreEqual(DeucarianVisibilityPhase.Visible, transition.Phase);
+            Assert.That(transition.Progress, Is.EqualTo(1f).Within(0.0001f));
+            Assert.AreEqual(1, completionCount);
+        }
+
+        [Test]
+        public void VisibilityTransitionReversalScalesDurationByRemainingDistance()
+        {
+            DeucarianVisibilityTransition transition =
+                new DeucarianVisibilityTransition(CreateLinearMotionProfile(2f, 4f));
+
+            transition.Show();
+            transition.Advance(1f);
+            float duration = transition.Hide();
+
+            Assert.That(duration, Is.EqualTo(2f).Within(0.0001f));
+            Assert.AreEqual(DeucarianVisibilityPhase.Exiting, transition.Phase);
+            transition.Advance(2f);
+            Assert.AreEqual(DeucarianVisibilityPhase.Hidden, transition.Phase);
+        }
+
+        [Test]
+        public void VisibilityTransitionCallerControlsTimeAndResetDoesNotNotify()
+        {
+            DeucarianVisibilityTransition transition =
+                new DeucarianVisibilityTransition(CreateLinearMotionProfile(1f, 1f));
+            int completionCount = 0;
+            transition.Completed += _ => completionCount++;
+
+            transition.Show();
+            Assert.True(transition.Advance(-1f));
+            Assert.That(transition.Progress, Is.EqualTo(0f).Within(0.0001f));
+            transition.Reset(true);
+
+            Assert.AreEqual(DeucarianVisibilityPhase.Visible, transition.Phase);
+            Assert.That(transition.Progress, Is.EqualTo(1f).Within(0.0001f));
+            Assert.AreEqual(0, completionCount);
+        }
+
+        [Test]
         public void IconSwapConfiguresIconsIntoSingleAbsoluteSlot()
         {
             VisualElement first = new VisualElement();
@@ -356,6 +411,20 @@ namespace Deucarian.UI.Tests
             Assert.That(element.style.borderTopRightRadius.value.value, Is.EqualTo(expectedRadius).Within(0.0001f));
             Assert.That(element.style.borderBottomLeftRadius.value.value, Is.EqualTo(expectedRadius).Within(0.0001f));
             Assert.That(element.style.borderBottomRightRadius.value.value, Is.EqualTo(expectedRadius).Within(0.0001f));
+        }
+
+        private static DeucarianMotionProfile CreateLinearMotionProfile(
+            float enterSeconds,
+            float exitSeconds)
+        {
+            return new DeucarianMotionProfile(
+                enterSeconds,
+                exitSeconds,
+                DeucarianEasing.Linear,
+                DeucarianEasing.Linear,
+                0f,
+                1f,
+                0f);
         }
     }
 }

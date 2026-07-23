@@ -9,6 +9,7 @@ namespace Deucarian.UI
         private readonly MonoBehaviour host;
         private readonly VisualElement element;
         private readonly DeucarianMotionProfile profile;
+        private readonly DeucarianVisibilityTransition transition;
         private Coroutine routine;
 
         public DeucarianAnimatedVisibility(
@@ -19,6 +20,7 @@ namespace Deucarian.UI
             this.host = host;
             this.element = element;
             this.profile = profile;
+            transition = new DeucarianVisibilityTransition(profile);
         }
 
         public bool IsAnimating => routine != null;
@@ -33,7 +35,8 @@ namespace Deucarian.UI
 
             if (host == null || !host.isActiveAndEnabled || !Application.isPlaying)
             {
-                ApplyProgress(element, profile, visible ? 1f : 0f, visible);
+                transition.Reset(visible);
+                ApplyVisibleProgress(element, profile, transition.Progress);
                 element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
                 return;
             }
@@ -79,22 +82,48 @@ namespace Deucarian.UI
                 element.style.display = DisplayStyle.Flex;
             }
 
-            float duration = Mathf.Max(0.0001f, profile.Duration(visible));
-            float elapsed = 0f;
-            while (elapsed < duration)
+            transition.Reset(!visible);
+            if (visible)
             {
-                ApplyProgress(element, profile, elapsed / duration, visible);
-                elapsed += Time.deltaTime;
-                yield return null;
+                transition.Show();
+            }
+            else
+            {
+                transition.Hide();
             }
 
-            ApplyProgress(element, profile, 1f, visible);
+            ApplyVisibleProgress(element, profile, transition.Progress);
+            while (transition.IsAnimating)
+            {
+                yield return null;
+                transition.Advance(Time.deltaTime);
+                ApplyVisibleProgress(element, profile, transition.Progress);
+            }
+
             if (!visible)
             {
                 element.style.display = DisplayStyle.None;
             }
 
             routine = null;
+        }
+
+        private static void ApplyVisibleProgress(
+            VisualElement element,
+            DeucarianMotionProfile profile,
+            float visibleProgress)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            float progress = Mathf.Clamp01(visibleProgress);
+            float scale = Mathf.Lerp(profile.HiddenScale, profile.VisibleScale, progress);
+            float offsetY = Mathf.Lerp(profile.HiddenOffsetY, 0f, progress);
+            element.style.opacity = progress;
+            element.style.scale = new Scale(new Vector3(scale, scale, 1f));
+            element.style.translate = new Translate(0f, Length.Percent(offsetY * 100f), 0f);
         }
     }
 }
