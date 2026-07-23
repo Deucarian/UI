@@ -13,6 +13,8 @@ namespace Deucarian.UI
         private readonly DeucarianVisibilityTransition transition;
         private Coroutine routine;
         private Action pendingCompletion;
+        private bool hasTarget;
+        private bool targetVisible;
 
         public DeucarianAnimatedVisibility(
             MonoBehaviour host,
@@ -27,31 +29,56 @@ namespace Deucarian.UI
 
         public bool IsAnimating => routine != null;
         public float Progress => transition.Progress;
+        public bool TargetVisible => hasTarget && targetVisible;
 
         public void SetVisible(bool visible)
         {
-            SetVisible(visible, null);
+            SetVisible(visible, true, null);
         }
 
         public void SetVisible(bool visible, Action completed)
         {
-            Stop();
+            SetVisible(visible, true, completed);
+        }
+
+        public void SetVisible(bool visible, bool animate, Action completed = null)
+        {
             if (element == null)
             {
+                Stop();
+                hasTarget = true;
+                targetVisible = visible;
                 completed?.Invoke();
                 return;
             }
 
-            if (host == null || !host.isActiveAndEnabled || !Application.isPlaying)
+            if (hasTarget && targetVisible == visible)
             {
-                transition.Reset(visible);
-                ApplyVisibleProgress(element, profile, transition.Progress);
-                element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+                if (routine != null)
+                {
+                    AddPendingCompletion(completed);
+                    return;
+                }
+
+                ApplyImmediate(visible);
                 completed?.Invoke();
                 return;
             }
 
-            pendingCompletion = completed;
+            Stop();
+            hasTarget = true;
+            targetVisible = visible;
+            if (!animate ||
+                host == null ||
+                !host.isActiveAndEnabled ||
+                !Application.isPlaying)
+            {
+                ApplyImmediate(visible);
+                completed?.Invoke();
+                return;
+            }
+
+            AddPendingCompletion(completed);
             routine = host.StartCoroutine(Animate(visible));
         }
 
@@ -64,6 +91,7 @@ namespace Deucarian.UI
 
             routine = null;
             pendingCompletion = null;
+            hasTarget = false;
         }
 
         public static void ApplyProgress(
@@ -120,6 +148,24 @@ namespace Deucarian.UI
             Action completed = pendingCompletion;
             pendingCompletion = null;
             completed?.Invoke();
+        }
+
+        private void ApplyImmediate(bool visible)
+        {
+            transition.Reset(visible);
+            ApplyVisibleProgress(element, profile, transition.Progress);
+            element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void AddPendingCompletion(Action completed)
+        {
+            if (completed == null)
+            {
+                return;
+            }
+
+            pendingCompletion -= completed;
+            pendingCompletion += completed;
         }
 
         private static void ApplyVisibleProgress(

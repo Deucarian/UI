@@ -63,6 +63,25 @@ namespace Deucarian.UI.Tests
         }
 
         [Test]
+        public void AnimatedVisibilityExplicitImmediateRequestKeepsOneTargetState()
+        {
+            VisualElement element = new VisualElement();
+            DeucarianAnimatedVisibility visibility = new DeucarianAnimatedVisibility(
+                null,
+                element,
+                DeucarianMotionProfile.UiPanel);
+            int completionCount = 0;
+
+            visibility.SetVisible(false, false, () => completionCount++);
+            visibility.SetVisible(false, false, () => completionCount++);
+
+            Assert.AreEqual(2, completionCount);
+            Assert.False(visibility.TargetVisible);
+            Assert.AreEqual(DisplayStyle.None, element.style.display.value);
+            Assert.That(visibility.Progress, Is.EqualTo(0f).Within(0.0001f));
+        }
+
+        [Test]
         public void AnimatedProgressImmediateFallbackAppliesTarget()
         {
             float applied = -1f;

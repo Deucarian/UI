@@ -76,7 +76,7 @@ public static class UiIslandSetup
 
 - `DeucarianMotionProfile`: reusable enter/exit/crossfade motion profile values.
 - `DeucarianVisibilityTransition`: renderer-independent, reversible visibility state with caller-driven timing, remaining duration, phase, progress, and completion notification.
-- `DeucarianAnimatedVisibility`: cancellable and reversible UI Toolkit visibility animation helper with optional completion callbacks.
+- `DeucarianAnimatedVisibility`: cancellable and reversible UI Toolkit visibility animation helper that coalesces repeated targets, retains completion callbacks, and supports explicit immediate transitions.
 - `DeucarianAnimatedProgress`: interruptible normalized motion for custom UI-control presentation.
 - `DeucarianAnimatedIconButton`: interruptible UI Toolkit icon-button state animation that changes logical interactivity immediately.
 - `DeucarianAnimatedScrubber`: interruptible UI Toolkit scrubber state animation that changes logical interactivity immediately.

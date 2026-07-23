@@ -6,6 +6,7 @@
 
 ## Unreleased
 
+- Coalesce repeated animated-visibility target requests so active transitions retain their completion callbacks, with explicit immediate-transition support for teardown paths.
 - Add a renderer-independent, reversible visibility transition state and use it to drive UI Toolkit animated visibility.
 - Add interruptible animated icon-button and scrubber state controllers that apply logical enabled state immediately while tweening presentation.
 - Add normalized animated progress for package-driven custom control transitions.
