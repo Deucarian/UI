@@ -75,6 +75,7 @@ public static class UiIslandSetup
 ## Public API map
 
 - `DeucarianMotionProfile`: reusable enter/exit/crossfade motion profile values.
+- `DeucarianVisibilityTransition`: renderer-independent, reversible visibility state with caller-driven timing, remaining duration, phase, progress, and completion notification.
 - `DeucarianAnimatedVisibility`: cancellable UI Toolkit visibility animation helper.
 - `DeucarianIconSwap`: single-slot two-icon swap helper for UI Toolkit buttons.
 - `DeucarianUIToolkitGlassPanel`: applies Deucarian frosted glass style to UI Toolkit panels.
