@@ -102,6 +102,55 @@ namespace Deucarian.UI
         public Color Border { get; }
     }
 
+    public readonly struct DeucarianScrubberPresentation
+    {
+        public DeucarianScrubberPresentation(
+            Color well,
+            Color track,
+            Color fill,
+            Color handle,
+            Color border,
+            float opacity,
+            float borderWidth,
+            Vector3 handleScale)
+        {
+            Well = well;
+            Track = track;
+            Fill = fill;
+            Handle = handle;
+            Border = border;
+            Opacity = Mathf.Clamp01(opacity);
+            BorderWidth = Mathf.Max(0f, borderWidth);
+            HandleScale = handleScale;
+        }
+
+        public Color Well { get; }
+        public Color Track { get; }
+        public Color Fill { get; }
+        public Color Handle { get; }
+        public Color Border { get; }
+        public float Opacity { get; }
+        public float BorderWidth { get; }
+        public Vector3 HandleScale { get; }
+
+        public static DeucarianScrubberPresentation Lerp(
+            DeucarianScrubberPresentation from,
+            DeucarianScrubberPresentation to,
+            float progress)
+        {
+            float t = Mathf.Clamp01(progress);
+            return new DeucarianScrubberPresentation(
+                Color.Lerp(from.Well, to.Well, t),
+                Color.Lerp(from.Track, to.Track, t),
+                Color.Lerp(from.Fill, to.Fill, t),
+                Color.Lerp(from.Handle, to.Handle, t),
+                Color.Lerp(from.Border, to.Border, t),
+                Mathf.Lerp(from.Opacity, to.Opacity, t),
+                Mathf.Lerp(from.BorderWidth, to.BorderWidth, t),
+                Vector3.Lerp(from.HandleScale, to.HandleScale, t));
+        }
+    }
+
     public static class DeucarianScrubberStyle
     {
         public const float DefaultWellAlphaEnabled = 0.5f;
@@ -177,12 +226,66 @@ namespace Deucarian.UI
                 return;
             }
 
+            ApplyLayout(
+                scrubber,
+                track,
+                fill,
+                handle,
+                metrics,
+                style,
+                containerInset);
+            ApplyPresentation(
+                scrubber,
+                track,
+                fill,
+                handle,
+                ResolvePresentation(metrics, palette, state, style));
+        }
+
+        public static DeucarianScrubberPresentation ResolvePresentation(
+            DeucarianScrubberMetrics metrics,
+            DeucarianScrubberPalette palette,
+            DeucarianScrubberVisualState state,
+            DeucarianThemeStyle style = null)
+        {
+            float borderWidth = style != null
+                ? Mathf.Max(0f, style.BorderWidth)
+                : metrics.BorderWidth;
+            Color borderColor = style != null
+                ? style.ResolveBorderColor(palette.Border)
+                : palette.Border;
+            float handleScale = state.Active
+                ? metrics.HandlePressedScale
+                : state.Hovered ? metrics.HandleHoverScale : 1f;
+            return new DeucarianScrubberPresentation(
+                palette.Well,
+                palette.Track,
+                palette.Fill,
+                palette.Handle,
+                borderColor,
+                state.Enabled ? metrics.EnabledOpacity : metrics.DisabledOpacity,
+                borderWidth,
+                new Vector3(handleScale, handleScale, 1f));
+        }
+
+        public static void ApplyLayout(
+            VisualElement scrubber,
+            VisualElement track,
+            VisualElement fill,
+            VisualElement handle,
+            DeucarianScrubberMetrics metrics,
+            DeucarianThemeStyle style = null,
+            float containerInset = 0f)
+        {
+            if (scrubber == null)
+            {
+                return;
+            }
+
             scrubber.style.display = DisplayStyle.Flex;
             scrubber.style.flexDirection = FlexDirection.Row;
             scrubber.style.alignItems = Align.Center;
             scrubber.style.justifyContent = Justify.Center;
-            scrubber.style.backgroundColor = palette.Well;
-            scrubber.style.opacity = state.Enabled ? metrics.EnabledOpacity : metrics.DisabledOpacity;
             scrubber.style.paddingLeft = metrics.HorizontalPadding;
             scrubber.style.paddingRight = metrics.HorizontalPadding;
             scrubber.style.paddingTop = metrics.VerticalPadding;
@@ -194,24 +297,55 @@ namespace Deucarian.UI
                     style.CornerRadius,
                     containerInset)
                 : metrics.CornerRadius;
-            float borderWidth = style != null
-                ? Mathf.Max(0f, style.BorderWidth)
-                : metrics.BorderWidth;
-            Color borderColor = style != null
-                ? style.ResolveBorderColor(palette.Border)
-                : palette.Border;
             ApplyCornerRadius(scrubber, scrubberRadius);
-            ApplyElementBorder(scrubber, borderWidth, borderColor);
 
-            ApplyTrack(track, metrics, palette);
-            ApplyFill(fill, metrics, palette);
-            ApplyHandle(handle, metrics, palette, state, borderWidth, borderColor);
+            ApplyTrackLayout(track, metrics);
+            ApplyFillLayout(fill, metrics);
+            ApplyHandleLayout(handle, metrics);
         }
 
-        private static void ApplyTrack(
+        public static void ApplyPresentation(
+            VisualElement scrubber,
             VisualElement track,
-            DeucarianScrubberMetrics metrics,
-            DeucarianScrubberPalette palette)
+            VisualElement fill,
+            VisualElement handle,
+            DeucarianScrubberPresentation presentation)
+        {
+            if (scrubber == null)
+            {
+                return;
+            }
+
+            scrubber.style.backgroundColor = presentation.Well;
+            scrubber.style.opacity = presentation.Opacity;
+            ApplyElementBorder(
+                scrubber,
+                presentation.BorderWidth,
+                presentation.Border);
+            if (track != null)
+            {
+                track.style.backgroundColor = presentation.Track;
+            }
+
+            if (fill != null)
+            {
+                fill.style.backgroundColor = presentation.Fill;
+            }
+
+            if (handle != null)
+            {
+                handle.style.backgroundColor = presentation.Handle;
+                handle.style.scale = new Scale(presentation.HandleScale);
+                ApplyElementBorder(
+                    handle,
+                    presentation.BorderWidth,
+                    presentation.Border);
+            }
+        }
+
+        private static void ApplyTrackLayout(
+            VisualElement track,
+            DeucarianScrubberMetrics metrics)
         {
             if (track == null)
             {
@@ -226,16 +360,14 @@ namespace Deucarian.UI
             track.style.height = metrics.TrackHeight;
             track.style.minHeight = metrics.TrackHeight;
             track.style.maxHeight = metrics.TrackHeight;
-            track.style.backgroundColor = palette.Track;
             track.style.overflow = Overflow.Visible;
             ApplyCornerRadius(track, metrics.TrackRadius);
             ApplyElementBorder(track, 0f, Color.clear);
         }
 
-        private static void ApplyFill(
+        private static void ApplyFillLayout(
             VisualElement fill,
-            DeucarianScrubberMetrics metrics,
-            DeucarianScrubberPalette palette)
+            DeucarianScrubberMetrics metrics)
         {
             if (fill == null)
             {
@@ -250,19 +382,14 @@ namespace Deucarian.UI
             fill.style.height = metrics.TrackHeight;
             fill.style.minHeight = metrics.TrackHeight;
             fill.style.maxHeight = metrics.TrackHeight;
-            fill.style.backgroundColor = palette.Fill;
             fill.style.overflow = Overflow.Visible;
             ApplyCornerRadius(fill, metrics.TrackRadius);
             ApplyElementBorder(fill, 0f, Color.clear);
         }
 
-        private static void ApplyHandle(
+        private static void ApplyHandleLayout(
             VisualElement handle,
-            DeucarianScrubberMetrics metrics,
-            DeucarianScrubberPalette palette,
-            DeucarianScrubberVisualState state,
-            float borderWidth,
-            Color borderColor)
+            DeucarianScrubberMetrics metrics)
         {
             if (handle == null)
             {
@@ -279,14 +406,7 @@ namespace Deucarian.UI
             handle.style.minHeight = metrics.HandleSize;
             handle.style.maxWidth = metrics.HandleSize;
             handle.style.maxHeight = metrics.HandleSize;
-            handle.style.backgroundColor = palette.Handle;
-
-            float handleScale = state.Active
-                ? metrics.HandlePressedScale
-                : state.Hovered ? metrics.HandleHoverScale : 1f;
-            handle.style.scale = new Scale(new Vector3(handleScale, handleScale, 1f));
             ApplyCornerRadius(handle, metrics.HandleSize * 0.5f);
-            ApplyElementBorder(handle, borderWidth, borderColor);
         }
 
         private static void ApplyCornerRadius(VisualElement element, float radius)

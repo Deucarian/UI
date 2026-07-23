@@ -20,6 +20,17 @@ namespace Deucarian.UI.Tests
         }
 
         [Test]
+        public void ControlStateMotionUsesShortAsymmetricDurations()
+        {
+            DeucarianMotionProfile profile = DeucarianMotionProfile.ControlState;
+
+            Assert.AreEqual(DeucarianEasing.EaseOutCubic, profile.EnterEasing);
+            Assert.AreEqual(DeucarianEasing.EaseInCubic, profile.ExitEasing);
+            Assert.That(profile.EnterSeconds, Is.EqualTo(0.14f).Within(0.0001f));
+            Assert.That(profile.ExitSeconds, Is.EqualTo(0.12f).Within(0.0001f));
+        }
+
+        [Test]
         public void AnimatedVisibilityImmediateProgressAppliesOpacityScaleAndTranslate()
         {
             VisualElement element = new VisualElement();
@@ -32,6 +43,40 @@ namespace Deucarian.UI.Tests
 
             Assert.That(element.style.opacity.value, Is.EqualTo(1f).Within(0.0001f));
             Assert.That(element.style.scale.value.value.x, Is.EqualTo(1f).Within(0.0001f));
+        }
+
+        [Test]
+        public void AnimatedVisibilityImmediateFallbackInvokesCompletion()
+        {
+            VisualElement element = new VisualElement();
+            DeucarianAnimatedVisibility visibility = new DeucarianAnimatedVisibility(
+                null,
+                element,
+                DeucarianMotionProfile.UiPanel);
+            int completionCount = 0;
+
+            visibility.SetVisible(true, () => completionCount++);
+
+            Assert.AreEqual(1, completionCount);
+            Assert.AreEqual(DisplayStyle.Flex, element.style.display.value);
+            Assert.That(visibility.Progress, Is.EqualTo(1f).Within(0.0001f));
+        }
+
+        [Test]
+        public void AnimatedProgressImmediateFallbackAppliesTarget()
+        {
+            float applied = -1f;
+            DeucarianAnimatedProgress progress = new DeucarianAnimatedProgress(
+                null,
+                0f,
+                DeucarianMotionProfile.ControlState,
+                value => applied = value);
+
+            progress.SetTarget(1f);
+
+            Assert.That(progress.Value, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(progress.Target, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(applied, Is.EqualTo(1f).Within(0.0001f));
         }
 
         [Test]
@@ -359,6 +404,120 @@ namespace Deucarian.UI.Tests
         }
 
         [Test]
+        public void AnimatedIconButtonAppliesLogicalDisabledStateImmediately()
+        {
+            Button button = new Button();
+            VisualElement icon = new VisualElement();
+            DeucarianIconButtonPalette palette = new DeucarianIconButtonPalette(
+                Color.black,
+                Color.gray,
+                Color.red,
+                Color.green,
+                Color.blue,
+                Color.white,
+                Color.cyan,
+                Color.magenta,
+                Color.yellow,
+                Color.clear,
+                Color.grey,
+                Color.white);
+            DeucarianAnimatedIconButton animated = new DeucarianAnimatedIconButton(
+                null,
+                button,
+                icon,
+                DeucarianMotionProfile.ControlState);
+
+            animated.SetState(
+                palette,
+                new DeucarianIconButtonVisualState(
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false));
+
+            Assert.False(button.enabledInHierarchy);
+            Assert.AreEqual(Color.blue, button.style.backgroundColor.value);
+            Assert.AreEqual(Color.clear, icon.style.unityBackgroundImageTintColor.value);
+            Assert.That(button.style.scale.value.value.x, Is.EqualTo(0.96f).Within(0.0001f));
+        }
+
+        [Test]
+        public void AnimatedIconButtonCanReapplyAfterExternalStylingWithoutOwningScale()
+        {
+            Button button = new Button();
+            VisualElement icon = new VisualElement();
+            button.style.scale = new Scale(Vector3.one);
+            icon.style.scale = new Scale(Vector3.one);
+            DeucarianIconButtonPalette palette = new DeucarianIconButtonPalette(
+                Color.black,
+                Color.gray,
+                Color.red,
+                Color.green,
+                Color.blue,
+                Color.white,
+                Color.cyan,
+                Color.magenta,
+                Color.yellow,
+                Color.clear,
+                Color.grey,
+                Color.white);
+            DeucarianIconButtonVisualState selected =
+                new DeucarianIconButtonVisualState(true, true, true, false, false, false);
+            DeucarianAnimatedIconButton animated = new DeucarianAnimatedIconButton(
+                null,
+                button,
+                icon,
+                DeucarianMotionProfile.ControlState,
+                true,
+                false,
+                false);
+
+            animated.SetState(palette, selected);
+            button.style.backgroundColor = Color.clear;
+            animated.InvalidatePresentation();
+            animated.SetState(palette, selected);
+
+            Assert.AreEqual(Color.green, button.style.backgroundColor.value);
+            Assert.That(button.style.scale.value.value.x, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(icon.style.scale.value.value.x, Is.EqualTo(1f).Within(0.0001f));
+        }
+
+        [Test]
+        public void IconButtonPresentationInterpolatesVisualProperties()
+        {
+            DeucarianIconButtonPresentation from = new DeucarianIconButtonPresentation(
+                true,
+                0.4f,
+                Color.black,
+                Color.black,
+                Color.black,
+                Color.black,
+                0f,
+                Vector3.one * 0.8f,
+                Vector3.one * 0.9f);
+            DeucarianIconButtonPresentation to = new DeucarianIconButtonPresentation(
+                true,
+                1f,
+                Color.white,
+                Color.white,
+                Color.white,
+                Color.white,
+                2f,
+                Vector3.one,
+                Vector3.one);
+
+            DeucarianIconButtonPresentation midpoint =
+                DeucarianIconButtonPresentation.Lerp(from, to, 0.5f);
+
+            Assert.That(midpoint.Opacity, Is.EqualTo(0.7f).Within(0.0001f));
+            Assert.That(midpoint.Background.r, Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(midpoint.BorderWidth, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(midpoint.ButtonScale.x, Is.EqualTo(0.9f).Within(0.0001f));
+        }
+
+        [Test]
         public void ScrubberStyleAppliesStableCompactGeometry()
         {
             VisualElement scrubber = new VisualElement();
@@ -385,6 +544,40 @@ namespace Deucarian.UI.Tests
             Assert.That(track.style.height.value.value, Is.EqualTo(5f).Within(0.0001f));
             Assert.That(handle.style.width.value.value, Is.EqualTo(14f).Within(0.0001f));
             Assert.That(handle.style.scale.value.value.x, Is.EqualTo(1.06f).Within(0.0001f));
+        }
+
+        [Test]
+        public void AnimatedScrubberAppliesLogicalDisabledStateImmediately()
+        {
+            VisualElement scrubber = new VisualElement();
+            VisualElement track = new VisualElement();
+            VisualElement fill = new VisualElement();
+            VisualElement handle = new VisualElement();
+            DeucarianScrubberPalette palette = new DeucarianScrubberPalette(
+                Color.black,
+                Color.gray,
+                Color.green,
+                Color.white,
+                Color.cyan);
+            DeucarianAnimatedScrubber animated = new DeucarianAnimatedScrubber(
+                null,
+                scrubber,
+                track,
+                fill,
+                handle,
+                DeucarianMotionProfile.ControlState);
+
+            animated.SetState(
+                DeucarianScrubberMetrics.Compact,
+                palette,
+                new DeucarianScrubberVisualState(false, false, false, false));
+
+            Assert.False(scrubber.enabledInHierarchy);
+            Assert.That(
+                scrubber.style.opacity.value,
+                Is.EqualTo(DeucarianScrubberMetrics.Compact.DisabledOpacity).Within(0.0001f));
+            Assert.AreEqual(Color.gray, track.style.backgroundColor.value);
+            Assert.AreEqual(Color.white, handle.style.backgroundColor.value);
         }
 
         [Test]

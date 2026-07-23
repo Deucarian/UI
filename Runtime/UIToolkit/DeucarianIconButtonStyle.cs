@@ -118,6 +118,59 @@ namespace Deucarian.UI
         }
     }
 
+    public readonly struct DeucarianIconButtonPresentation
+    {
+        public DeucarianIconButtonPresentation(
+            bool visible,
+            float opacity,
+            Color background,
+            Color text,
+            Color icon,
+            Color border,
+            float borderWidth,
+            Vector3 buttonScale,
+            Vector3 iconScale)
+        {
+            Visible = visible;
+            Opacity = Mathf.Clamp01(opacity);
+            Background = background;
+            Text = text;
+            Icon = icon;
+            Border = border;
+            BorderWidth = Mathf.Max(0f, borderWidth);
+            ButtonScale = buttonScale;
+            IconScale = iconScale;
+        }
+
+        public bool Visible { get; }
+        public float Opacity { get; }
+        public Color Background { get; }
+        public Color Text { get; }
+        public Color Icon { get; }
+        public Color Border { get; }
+        public float BorderWidth { get; }
+        public Vector3 ButtonScale { get; }
+        public Vector3 IconScale { get; }
+
+        public static DeucarianIconButtonPresentation Lerp(
+            DeucarianIconButtonPresentation from,
+            DeucarianIconButtonPresentation to,
+            float progress)
+        {
+            float t = Mathf.Clamp01(progress);
+            return new DeucarianIconButtonPresentation(
+                to.Visible,
+                Mathf.Lerp(from.Opacity, to.Opacity, t),
+                Color.Lerp(from.Background, to.Background, t),
+                Color.Lerp(from.Text, to.Text, t),
+                Color.Lerp(from.Icon, to.Icon, t),
+                Color.Lerp(from.Border, to.Border, t),
+                Mathf.Lerp(from.BorderWidth, to.BorderWidth, t),
+                Vector3.Lerp(from.ButtonScale, to.ButtonScale, t),
+                Vector3.Lerp(from.IconScale, to.IconScale, t));
+        }
+    }
+
     public sealed class DeucarianIconButtonInteraction : IDisposable
     {
         private Button button;
@@ -303,17 +356,9 @@ namespace Deucarian.UI
             DeucarianIconButtonVisualState state,
             DeucarianThemeStyle style)
         {
-            if (button == null)
-            {
-                return;
-            }
-
-            button.style.display = state.Visible ? DisplayStyle.Flex : DisplayStyle.None;
-            button.style.opacity = state.Visible ? 1f : 0f;
-            button.style.backgroundColor = palette.ResolveBackground(state);
-            button.style.color = palette.Text;
-            button.style.scale = new Scale(ResolveButtonScale(state));
-            ApplyBorder(button, palette, state, style);
+            ApplyButtonPresentation(
+                button,
+                ResolvePresentation(palette, state, style));
         }
 
         public static void ApplyIconState(
@@ -321,15 +366,112 @@ namespace Deucarian.UI
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state)
         {
+            ApplyIconPresentation(
+                icon,
+                ResolvePresentation(palette, state, null));
+        }
+
+        public static DeucarianIconButtonPresentation ResolvePresentation(
+            DeucarianIconButtonPalette palette,
+            DeucarianIconButtonVisualState state,
+            DeucarianThemeStyle style = null)
+        {
+            bool outlined = state.Active || state.Focused || state.Disabled;
+            float borderWidth = style != null
+                ? outlined ? Mathf.Max(0f, style.BorderWidth) : NoBorderWidth
+                : state.Active || state.Focused
+                    ? ActiveBorderWidth
+                    : state.Disabled ? DisabledBorderWidth : NoBorderWidth;
+            Color paletteBorder = palette.ResolveBorder(state);
+            Color borderColor = style != null
+                ? style.ResolveBorderColor(paletteBorder)
+                : paletteBorder;
+            return new DeucarianIconButtonPresentation(
+                state.Visible,
+                state.Visible ? 1f : 0f,
+                palette.ResolveBackground(state),
+                palette.Text,
+                palette.ResolveIcon(state),
+                borderColor,
+                borderWidth,
+                ResolveButtonScale(state),
+                ResolveIconScale(state));
+        }
+
+        public static void ApplyPresentation(
+            Button button,
+            VisualElement icon,
+            DeucarianIconButtonPresentation presentation,
+            bool keepDisplayed = false,
+            bool manageIconVisibility = true,
+            bool manageButtonScale = true,
+            bool manageIconScale = true)
+        {
+            ApplyButtonPresentation(
+                button,
+                presentation,
+                keepDisplayed,
+                manageButtonScale);
+            ApplyIconPresentation(
+                icon,
+                presentation,
+                keepDisplayed,
+                manageIconVisibility,
+                manageIconScale);
+        }
+
+        public static void ApplyButtonPresentation(
+            Button button,
+            DeucarianIconButtonPresentation presentation,
+            bool keepDisplayed = false,
+            bool manageScale = true)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            button.style.display = presentation.Visible || keepDisplayed
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
+            button.style.opacity = presentation.Opacity;
+            button.style.backgroundColor = presentation.Background;
+            button.style.color = presentation.Text;
+            if (manageScale)
+            {
+                button.style.scale = new Scale(presentation.ButtonScale);
+            }
+            SetBorder(
+                button,
+                presentation.BorderWidth,
+                presentation.Border);
+        }
+
+        public static void ApplyIconPresentation(
+            VisualElement icon,
+            DeucarianIconButtonPresentation presentation,
+            bool keepDisplayed = false,
+            bool manageVisibility = true,
+            bool manageScale = true)
+        {
             if (icon == null)
             {
                 return;
             }
 
-            icon.style.unityBackgroundImageTintColor = palette.ResolveIcon(state);
-            icon.style.opacity = state.Visible ? 1f : 0f;
-            icon.style.display = state.Visible ? DisplayStyle.Flex : DisplayStyle.None;
-            icon.style.scale = new Scale(ResolveIconScale(state));
+            icon.style.unityBackgroundImageTintColor = presentation.Icon;
+            if (manageVisibility)
+            {
+                icon.style.opacity = presentation.Opacity;
+                icon.style.display = presentation.Visible || keepDisplayed
+                    ? DisplayStyle.Flex
+                    : DisplayStyle.None;
+            }
+
+            if (manageScale)
+            {
+                icon.style.scale = new Scale(presentation.IconScale);
+            }
         }
 
         public static Vector3 ResolveButtonScale(DeucarianIconButtonVisualState state)
@@ -370,31 +512,16 @@ namespace Deucarian.UI
             return new Vector3(scale, scale, 1f);
         }
 
-        private static void ApplyBorder(
-            Button button,
-            DeucarianIconButtonPalette palette,
-            DeucarianIconButtonVisualState state,
-            DeucarianThemeStyle style)
+        private static void SetBorder(Button button, float width, Color color)
         {
-            bool outlined = state.Active || state.Focused || state.Disabled;
-            float width = style != null
-                ? outlined ? Mathf.Max(0f, style.BorderWidth) : NoBorderWidth
-                : state.Active || state.Focused
-                    ? ActiveBorderWidth
-                    : state.Disabled ? DisabledBorderWidth : NoBorderWidth;
             button.style.borderLeftWidth = width;
             button.style.borderRightWidth = width;
             button.style.borderTopWidth = width;
             button.style.borderBottomWidth = width;
-
-            Color paletteBorder = palette.ResolveBorder(state);
-            Color borderColor = style != null
-                ? style.ResolveBorderColor(paletteBorder)
-                : paletteBorder;
-            button.style.borderLeftColor = borderColor;
-            button.style.borderRightColor = borderColor;
-            button.style.borderTopColor = borderColor;
-            button.style.borderBottomColor = borderColor;
+            button.style.borderLeftColor = color;
+            button.style.borderRightColor = color;
+            button.style.borderTopColor = color;
+            button.style.borderBottomColor = color;
         }
     }
 }

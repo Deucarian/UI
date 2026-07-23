@@ -58,6 +58,15 @@ namespace Deucarian.UI
             1f,
             0f);
 
+        public static DeucarianMotionProfile ControlState => new DeucarianMotionProfile(
+            0.14f,
+            0.12f,
+            DeucarianEasing.EaseOutCubic,
+            DeucarianEasing.EaseInCubic,
+            0.96f,
+            1f,
+            0f);
+
         public float Evaluate(bool entering, float progress)
         {
             return DeucarianEasingUtility.Evaluate(
