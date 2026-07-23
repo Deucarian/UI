@@ -6,6 +6,7 @@
 
 ## Unreleased
 
+- Add a renderer-independent, reversible visibility transition state and use it to drive UI Toolkit animated visibility.
 - Resolve control-island sizing from semantic Comfortable, Standard, and Compact density rather than surface preset identity.
 - Resolve panel and concentric nested-control radii independently from the composed shape profile while preserving legacy style-ID fallbacks.
 - Add backward-compatible theme-style overloads for icon-button state and scrubber chrome so composed stroke width, color, Borderless behavior, and concentric control radii propagate consistently.
