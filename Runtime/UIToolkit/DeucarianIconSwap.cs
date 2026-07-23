@@ -12,6 +12,7 @@ namespace Deucarian.UI
         private readonly DeucarianMotionProfile profile;
         private Coroutine routine;
         private bool firstVisible;
+        private float firstOpacity;
 
         public DeucarianIconSwap(
             MonoBehaviour host,
@@ -30,23 +31,28 @@ namespace Deucarian.UI
 
         public void SetFirstVisible(bool visible, bool animate)
         {
-            if (routine != null && host != null)
-            {
-                host.StopCoroutine(routine);
-                routine = null;
-            }
+            Stop();
 
             bool changed = firstVisible != visible;
             firstVisible = visible;
             if (!changed || !animate || host == null || !host.isActiveAndEnabled || !Application.isPlaying)
             {
+                firstOpacity = visible ? 1f : 0f;
                 SetImmediate(firstIcon, secondIcon, visible);
                 return;
             }
 
-            VisualElement from = visible ? secondIcon : firstIcon;
-            VisualElement to = visible ? firstIcon : secondIcon;
-            routine = host.StartCoroutine(Animate(from, to, visible));
+            routine = host.StartCoroutine(Animate(visible));
+        }
+
+        public void Stop()
+        {
+            if (routine != null && host != null)
+            {
+                host.StopCoroutine(routine);
+            }
+
+            routine = null;
         }
 
         public static void ConfigureIconSlot(VisualElement icon, float buttonSize, float iconSize)
@@ -75,28 +81,36 @@ namespace Deucarian.UI
             SetIcon(secondIcon, !firstVisible, firstVisible ? 0f : 1f);
         }
 
-        private IEnumerator Animate(VisualElement from, VisualElement to, bool finalFirstVisible)
+        private IEnumerator Animate(bool finalFirstVisible)
         {
-            if (from == null || to == null)
+            if (firstIcon == null || secondIcon == null)
             {
+                firstOpacity = finalFirstVisible ? 1f : 0f;
                 SetImmediate(firstIcon, secondIcon, finalFirstVisible);
                 routine = null;
                 yield break;
             }
 
-            from.style.display = DisplayStyle.Flex;
-            to.style.display = DisplayStyle.Flex;
-            float duration = Mathf.Max(0.0001f, profile.EnterSeconds);
+            firstIcon.style.display = DisplayStyle.Flex;
+            secondIcon.style.display = DisplayStyle.Flex;
+            float startOpacity = firstOpacity;
+            float targetOpacity = finalFirstVisible ? 1f : 0f;
+            bool entering = targetOpacity > startOpacity;
+            float duration = Mathf.Max(
+                0.0001f,
+                profile.Duration(entering) * Mathf.Abs(targetOpacity - startOpacity));
             float elapsed = 0f;
             while (elapsed < duration)
             {
-                float eased = profile.Evaluate(true, elapsed / duration);
-                from.style.opacity = 1f - eased;
-                to.style.opacity = eased;
+                float eased = profile.Evaluate(entering, elapsed / duration);
+                firstOpacity = Mathf.Lerp(startOpacity, targetOpacity, eased);
+                firstIcon.style.opacity = firstOpacity;
+                secondIcon.style.opacity = 1f - firstOpacity;
                 elapsed += Time.deltaTime;
                 yield return null;
             }
 
+            firstOpacity = targetOpacity;
             SetImmediate(firstIcon, secondIcon, finalFirstVisible);
             routine = null;
         }

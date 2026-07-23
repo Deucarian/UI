@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -11,6 +12,7 @@ namespace Deucarian.UI
         private readonly DeucarianMotionProfile profile;
         private readonly DeucarianVisibilityTransition transition;
         private Coroutine routine;
+        private Action pendingCompletion;
 
         public DeucarianAnimatedVisibility(
             MonoBehaviour host,
@@ -24,12 +26,19 @@ namespace Deucarian.UI
         }
 
         public bool IsAnimating => routine != null;
+        public float Progress => transition.Progress;
 
         public void SetVisible(bool visible)
+        {
+            SetVisible(visible, null);
+        }
+
+        public void SetVisible(bool visible, Action completed)
         {
             Stop();
             if (element == null)
             {
+                completed?.Invoke();
                 return;
             }
 
@@ -38,9 +47,11 @@ namespace Deucarian.UI
                 transition.Reset(visible);
                 ApplyVisibleProgress(element, profile, transition.Progress);
                 element.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+                completed?.Invoke();
                 return;
             }
 
+            pendingCompletion = completed;
             routine = host.StartCoroutine(Animate(visible));
         }
 
@@ -52,6 +63,7 @@ namespace Deucarian.UI
             }
 
             routine = null;
+            pendingCompletion = null;
         }
 
         public static void ApplyProgress(
@@ -82,7 +94,6 @@ namespace Deucarian.UI
                 element.style.display = DisplayStyle.Flex;
             }
 
-            transition.Reset(!visible);
             if (visible)
             {
                 transition.Show();
@@ -106,6 +117,9 @@ namespace Deucarian.UI
             }
 
             routine = null;
+            Action completed = pendingCompletion;
+            pendingCompletion = null;
+            completed?.Invoke();
         }
 
         private static void ApplyVisibleProgress(

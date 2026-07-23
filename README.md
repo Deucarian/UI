@@ -76,8 +76,11 @@ public static class UiIslandSetup
 
 - `DeucarianMotionProfile`: reusable enter/exit/crossfade motion profile values.
 - `DeucarianVisibilityTransition`: renderer-independent, reversible visibility state with caller-driven timing, remaining duration, phase, progress, and completion notification.
-- `DeucarianAnimatedVisibility`: cancellable UI Toolkit visibility animation helper.
-- `DeucarianIconSwap`: single-slot two-icon swap helper for UI Toolkit buttons.
+- `DeucarianAnimatedVisibility`: cancellable and reversible UI Toolkit visibility animation helper with optional completion callbacks.
+- `DeucarianAnimatedProgress`: interruptible normalized motion for custom UI-control presentation.
+- `DeucarianAnimatedIconButton`: interruptible UI Toolkit icon-button state animation that changes logical interactivity immediately.
+- `DeucarianAnimatedScrubber`: interruptible UI Toolkit scrubber state animation that changes logical interactivity immediately.
+- `DeucarianIconSwap`: reversible single-slot two-icon crossfade helper for UI Toolkit buttons.
 - `DeucarianUIToolkitGlassPanel`: applies Deucarian frosted glass style to UI Toolkit panels.
 - `DeucarianUGUIGlassPanel`: applies Deucarian frosted glass style to uGUI images/graphics.
 - `DeucarianControlIslandStyle`: reusable compact control island, icon button, and scrubber geometry application.
