@@ -37,9 +37,9 @@ namespace Deucarian.UI.Tests
         }
 
         [Test]
-        public void BuiltInAccentDrivesSelectedControlWithoutConsumerRoles()
+        public void GenericActiveRoleDrivesSelectedControlWithoutConsumerRoles()
         {
-            Color accent = new Color(0.21f, 0.54f, 0.87f, 1f);
+            Color selectedColor = new Color(0.21f, 0.54f, 0.87f, 1f);
             DeucarianColorRole role =
                 ScriptableObject.CreateInstance<DeucarianColorRole>();
             DeucarianColorPalette palette =
@@ -52,13 +52,13 @@ namespace Deucarian.UI.Tests
             try
             {
                 role.Configure(
-                    DeucarianBuiltinColorRoleIds.Accent,
-                    "Accent",
+                    DeucarianControlIslandColorRoleIds.Active,
+                    "Control Island Active",
                     DeucarianColorRoleCategories.UiState,
                     string.Empty,
-                    accent,
+                    selectedColor,
                     false);
-                palette.SetColor(role, accent);
+                palette.SetColor(role, selectedColor);
                 theme.Configure(
                     "deucarian.test.control-island",
                     "Control Island",
@@ -77,7 +77,7 @@ namespace Deucarian.UI.Tests
                     false);
 
                 Assert.AreEqual(
-                    accent,
+                    selectedColor,
                     resolved.ResolveBackground(selected));
             }
             finally
@@ -87,6 +87,49 @@ namespace Deucarian.UI.Tests
                 Object.DestroyImmediate(palette);
                 Object.DestroyImmediate(role);
             }
+        }
+
+        [Test]
+        public void ReferencePaletteMapsCanonicalControlIslandRolesExactly()
+        {
+            DeucarianTheme theme = DeucarianViewerReferenceThemePreset
+                .Resolve()
+                .DefaultTheme;
+            DeucarianIconButtonPalette palette =
+                DeucarianControlIslandTheme.ResolveButtonPalette(theme);
+
+            AssertRoleColor(
+                theme,
+                DeucarianBuiltinColorRoleIds.UiNormal,
+                palette.BackgroundDisabled);
+            AssertRoleColor(
+                theme,
+                DeucarianBuiltinColorRoleIds.Accent,
+                palette.BackgroundSelected);
+            AssertRoleColor(
+                theme,
+                DeucarianBuiltinColorRoleIds.TextMuted,
+                palette.Icon);
+            AssertRoleColor(
+                theme,
+                DeucarianBuiltinColorRoleIds.Primary,
+                palette.IconHover);
+            AssertRoleColor(
+                theme,
+                DeucarianBuiltinColorRoleIds.TextPrimary,
+                palette.IconActive);
+            AssertRoleColor(
+                theme,
+                DeucarianBuiltinColorRoleIds.TextDisabled,
+                palette.IconDisabled);
+            AssertRoleColor(
+                theme,
+                DeucarianBuiltinColorRoleIds.TextMuted,
+                palette.Border);
+            AssertRoleColor(
+                theme,
+                DeucarianBuiltinColorRoleIds.UiFocused,
+                palette.BorderActive);
         }
 
         [Test]
@@ -160,6 +203,15 @@ namespace Deucarian.UI.Tests
                 Is.GreaterThan(
                     DeucarianMorphingMenuMotion
                         .ResolveDuration(false)));
+        }
+
+        private static void AssertRoleColor(
+            DeucarianTheme theme,
+            string roleId,
+            Color actual)
+        {
+            Assert.IsTrue(theme.TryGetColorById(roleId, out Color expected));
+            Assert.AreEqual(expected, actual, roleId);
         }
     }
 }

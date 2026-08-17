@@ -167,7 +167,9 @@ namespace Deucarian.UI
                 }
             }
 
-            return null;
+            return DeucarianViewerReferenceThemePreset
+                .Resolve()
+                .DefaultTheme;
         }
 
         public static DeucarianThemeStyle ResolveStyle(

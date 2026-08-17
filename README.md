@@ -6,7 +6,7 @@ Deucarian UI provides reusable runtime UI presentation primitives for Deucarian 
 
 Package ID: `com.deucarian.ui`
 
-Current package version: `0.2.2`.
+Current package version: `0.2.3`.
 
 ## When to use it
 
@@ -84,6 +84,9 @@ public static class UiIslandSetup
 - `DeucarianUIToolkitGlassPanel`: applies Deucarian frosted glass style to UI Toolkit panels.
 - `DeucarianUGUIGlassPanel`: applies Deucarian frosted glass style to uGUI images/graphics.
 - `DeucarianControlIslandStyle`: reusable compact control island, icon button, and scrubber geometry application.
+- `DeucarianControlIslandVisualStyle`: complete package-owned control-island composition for layout, glass chrome, semantic theme states, scrubbers, and centered overlay icons.
+- `DeucarianControlIslandColorRoleIds`: consumer-neutral active/inactive palette roles for branded viewer control islands.
+- `DeucarianUIRuntimeAssets`: canonical package-owned stylesheet and runtime PanelSettings resource access.
 - `DeucarianControlIslandProfile` and `DeucarianControlIslandProfiles`: Comfortable, Standard, and Compact geometry resolved from `DeucarianThemeDensity`. Legacy Frosted Glass, Fluent Acrylic, and Material Dark IDs remain supported when density is unspecified. All profiles share the same 4 px item margin and vertical inset rhythm, while panel radius resolves independently from the style's shape profile.
 - `DeucarianIconButtonStyle`: reusable icon button visual state, palette, interaction, and state application helpers.
 - `DeucarianScrubberStyle`: reusable compact scrubber metrics, palette, and state application helpers.

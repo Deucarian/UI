@@ -122,9 +122,8 @@ namespace Deucarian.UI
             DeucarianTheme theme,
             Object context = null)
         {
-            return ResolveColor(
+            return ResolveInactiveColor(
                 ResolveTheme(theme, context),
-                DeucarianBuiltinColorRoleIds.TextMuted,
                 new Color(0.4f, 0.4f, 0.4f, 1f));
         }
 
@@ -155,13 +154,11 @@ namespace Deucarian.UI
                 resolvedTheme,
                 DeucarianBuiltinColorRoleIds.UiNormal,
                 Color.clear);
-            Color muted = ResolveColor(
+            Color secondary = ResolveInactiveColor(
                 resolvedTheme,
-                DeucarianBuiltinColorRoleIds.TextMuted,
                 new Color(0.4f, 0.4f, 0.4f, 1f));
-            Color selected = ResolveColor(
+            Color selected = ResolveActiveColor(
                 resolvedTheme,
-                DeucarianBuiltinColorRoleIds.Accent,
                 new Color(0.769f, 0.631f, 0.976f, 1f));
             Color text = ResolveColor(
                 resolvedTheme,
@@ -178,12 +175,9 @@ namespace Deucarian.UI
                     DeucarianBuiltinColorRoleIds.UiPressed,
                     new Color(1f, 1f, 1f, 0.2f)),
                 selected,
-                ResolveColor(
-                    resolvedTheme,
-                    DeucarianBuiltinColorRoleIds.UiDisabled,
-                    normal),
+                normal,
                 text,
-                muted,
+                secondary,
                 ResolveColor(
                     resolvedTheme,
                     DeucarianBuiltinColorRoleIds.Primary,
@@ -193,7 +187,7 @@ namespace Deucarian.UI
                     resolvedTheme,
                     DeucarianBuiltinColorRoleIds.TextDisabled,
                     new Color(0.6f, 0.6f, 0.6f, 1f)),
-                muted,
+                secondary,
                 ResolveColor(
                     resolvedTheme,
                     DeucarianBuiltinColorRoleIds.UiFocused,
@@ -215,20 +209,20 @@ namespace Deucarian.UI
 
             Color track = ResolveColor(
                 resolvedTheme,
-                state.Enabled
-                    ? DeucarianBuiltinColorRoleIds.UiNormal
-                    : DeucarianBuiltinColorRoleIds.UiDisabled,
+                DeucarianBuiltinColorRoleIds.UiNormal,
                 Color.clear);
             track.a = state.Enabled
                 ? DeucarianScrubberStyle.DefaultTrackAlphaEnabled
                 : DeucarianScrubberStyle.DefaultTrackAlphaDisabled;
 
-            Color fill = ResolveColor(
-                resolvedTheme,
-                state.Enabled
-                    ? DeucarianBuiltinColorRoleIds.Accent
-                    : DeucarianBuiltinColorRoleIds.UiDisabled,
-                new Color(0.769f, 0.631f, 0.976f, 1f));
+            Color fill = state.Enabled
+                ? ResolveActiveColor(
+                    resolvedTheme,
+                    new Color(0.769f, 0.631f, 0.976f, 1f))
+                : ResolveColor(
+                    resolvedTheme,
+                    DeucarianBuiltinColorRoleIds.UiNormal,
+                    Color.clear);
             fill.a = !state.Enabled
                 ? DeucarianScrubberStyle.DefaultFillAlphaDisabled
                 : state.Active || state.Hovered
@@ -247,12 +241,15 @@ namespace Deucarian.UI
                 ? DeucarianScrubberStyle.DefaultHandleAlphaEnabled
                 : DeucarianScrubberStyle.DefaultHandleAlphaDisabled;
 
-            Color border = ResolveColor(
-                resolvedTheme,
-                state.Enabled && (state.Hovered || state.Active)
-                    ? DeucarianBuiltinColorRoleIds.UiFocused
-                    : DeucarianBuiltinColorRoleIds.TextMuted,
-                new Color(0.4f, 0.4f, 0.4f, 1f));
+            Color border = state.Enabled &&
+                           (state.Hovered || state.Active)
+                ? ResolveColor(
+                    resolvedTheme,
+                    DeucarianBuiltinColorRoleIds.UiFocused,
+                    new Color(0.769f, 0.631f, 0.976f, 1f))
+                : ResolveInactiveColor(
+                    resolvedTheme,
+                    new Color(0.4f, 0.4f, 0.4f, 1f));
             return new DeucarianScrubberPalette(
                 well,
                 track,
@@ -270,6 +267,55 @@ namespace Deucarian.UI
                    theme.TryGetColorById(roleId, out Color color)
                 ? color
                 : fallback;
+        }
+
+        private static Color ResolveActiveColor(
+            DeucarianTheme theme,
+            Color fallback)
+        {
+            if (theme != null &&
+                theme.TryGetColorById(
+                    DeucarianControlIslandColorRoleIds.Active,
+                    out Color color))
+            {
+                return color;
+            }
+
+            return ResolveColor(
+                theme,
+                IsLightTheme(theme)
+                    ? DeucarianBuiltinColorRoleIds.UiSelected
+                    : DeucarianBuiltinColorRoleIds.Accent,
+                fallback);
+        }
+
+        private static Color ResolveInactiveColor(
+            DeucarianTheme theme,
+            Color fallback)
+        {
+            if (theme != null &&
+                theme.TryGetColorById(
+                    DeucarianControlIslandColorRoleIds.Inactive,
+                    out Color color))
+            {
+                return color;
+            }
+
+            return ResolveColor(
+                theme,
+                IsLightTheme(theme)
+                    ? DeucarianBuiltinColorRoleIds.TextSecondary
+                    : DeucarianBuiltinColorRoleIds.TextMuted,
+                fallback);
+        }
+
+        private static bool IsLightTheme(DeucarianTheme theme)
+        {
+            return theme != null &&
+                   theme.ColorPalette != null &&
+                   theme.ColorPalette.HasThemeMode &&
+                   theme.ColorPalette.ThemeMode ==
+                   DeucarianThemeMode.Light;
         }
 
         private static DeucarianTheme ResolveTheme(

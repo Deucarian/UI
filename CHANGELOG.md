@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3 - 2026-08-18
+
+- Added consumer-neutral active/inactive control-island roles, with reference-theme fallbacks, so branded viewers preserve their authored toolbar palettes without application-specific IDs.
+- Used the shared viewer reference theme as the package fallback and raised the explicit Theming dependency to `1.0.5`.
+
 ## 0.2.2 - 2026-08-18
 
 - Added the canonical package-owned control-island facade, built-in-role theme resolution, glass presentation, centered overlay icon layout, runtime tooltip, and interactive timeline scrubber.
