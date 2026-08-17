@@ -6,7 +6,7 @@ Deucarian UI provides reusable runtime UI presentation primitives for Deucarian 
 
 Package ID: `com.deucarian.ui`
 
-Current package version: `0.2.1`.
+Current package version: `0.2.2`.
 
 ## When to use it
 

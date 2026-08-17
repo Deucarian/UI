@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2 - 2026-08-18
+
+- Added the canonical package-owned control-island facade, built-in-role theme resolution, glass presentation, centered overlay icon layout, runtime tooltip, and interactive timeline scrubber.
+- Added shared morphing-menu motion plus canonical UI Toolkit stylesheet and runtime PanelSettings resources.
+
 ## 0.2.1 - 2026-07-17
 
 - Added an importable Frosted Control Island scene and assembly, and aligned exact Deucarian dependencies.
