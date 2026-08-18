@@ -1,7 +1,9 @@
 using Deucarian.Common;
 using Deucarian.Theming;
 using NUnit.Framework;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 namespace Deucarian.UI.Tests
@@ -90,18 +92,22 @@ namespace Deucarian.UI.Tests
         }
 
         [Test]
-        public void RuntimeTooltipLayerIsSharedAndAlwaysUsesTooltipDepth()
+        public void RuntimeTooltipLayerIsSharedWithinSceneAndUsesTooltipDepth()
         {
+            Scene testScene = EditorSceneManager.NewPreviewScene();
             GameObject firstObject = new GameObject("First Tooltip Source");
             GameObject secondObject = new GameObject("Second Tooltip Source");
+            SceneManager.MoveGameObjectToScene(firstObject, testScene);
+            SceneManager.MoveGameObjectToScene(secondObject, testScene);
             UIDocument firstDocument = firstObject.AddComponent<UIDocument>();
             UIDocument secondDocument = secondObject.AddComponent<UIDocument>();
-            PanelSettings settings =
-                ScriptableObject.CreateInstance<PanelSettings>();
-            settings.clearColor = true;
-            settings.clearDepthStencil = true;
-            firstDocument.panelSettings = settings;
-            secondDocument.panelSettings = settings;
+            DeucarianUIRuntime.Configure(
+                firstDocument,
+                DeucarianUISurfaceRole.PrimaryControls);
+            DeucarianUIRuntime.Configure(
+                secondDocument,
+                DeucarianUISurfaceRole.ContextControls);
+            PanelSettings settings = firstDocument.panelSettings;
             DeucarianRuntimeTooltipPresenter first = null;
             DeucarianRuntimeTooltipPresenter second = null;
             UIDocument overlay = null;
@@ -120,10 +126,14 @@ namespace Deucarian.UI.Tests
                 Assert.That(overlay.panelSettings, Is.Not.SameAs(settings));
                 Assert.That(
                     overlay.panelSettings.sortingOrder,
-                    Is.EqualTo(DeucarianUIDepth.Tooltip));
+                    Is.EqualTo(
+                        DeucarianUIDepth.Resolve(
+                            DeucarianUISurfaceRole.Tooltip)));
                 Assert.That(
                     overlay.sortingOrder,
-                    Is.EqualTo(DeucarianUIDepth.Tooltip));
+                    Is.EqualTo(
+                        DeucarianUIDepth.Resolve(
+                            DeucarianUISurfaceRole.Tooltip)));
                 Assert.False(overlay.panelSettings.clearColor);
                 Assert.False(overlay.panelSettings.clearDepthStencil);
                 Assert.That(
@@ -133,11 +143,14 @@ namespace Deucarian.UI.Tests
                     first.Bubble.style.minHeight.value.value,
                     Is.EqualTo(34f));
                 Assert.That(
-                    first.Bubble.parent,
+                    first.Bubble.parent.parent,
                     Is.SameAs(overlay.rootVisualElement));
                 Assert.That(
-                    second.Bubble.parent,
+                    second.Bubble.parent.parent,
                     Is.SameAs(overlay.rootVisualElement));
+                Assert.That(
+                    first.Bubble.parent,
+                    Is.Not.SameAs(second.Bubble.parent));
 
                 first.Dispose();
                 first.Dispose();
@@ -155,7 +168,10 @@ namespace Deucarian.UI.Tests
                 second?.Dispose();
                 Object.DestroyImmediate(firstObject);
                 Object.DestroyImmediate(secondObject);
-                Object.DestroyImmediate(settings);
+                if (testScene.IsValid() && testScene.isLoaded)
+                {
+                    EditorSceneManager.ClosePreviewScene(testScene);
+                }
             }
         }
 

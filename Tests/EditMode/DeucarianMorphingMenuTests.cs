@@ -64,7 +64,17 @@ namespace Deucarian.UI.Tests
                 menu.RuntimeTooltip.IsBound(bodyTooltipControl));
             Assert.That(
                 menu.RuntimeTooltip.OverlayDocument.sortingOrder,
-                Is.EqualTo(DeucarianUIDepth.Tooltip));
+                Is.EqualTo(
+                    DeucarianUIDepth.Resolve(
+                        DeucarianUISurfaceRole.Tooltip)));
+            Assert.True(
+                DeucarianUIRuntime.IsConfigured(
+                    menu.Document,
+                    DeucarianUISurfaceRole.Menu));
+            Assert.True(
+                DeucarianUIRuntime.IsConfigured(
+                    menu.RuntimeTooltip.OverlayDocument,
+                    DeucarianUISurfaceRole.Tooltip));
             Assert.AreEqual(PickingMode.Ignore, menu.Root.pickingMode);
             Assert.AreEqual(PickingMode.Ignore, menu.MenuRoot.pickingMode);
             Assert.AreEqual(PickingMode.Position, menu.Chrome.pickingMode);

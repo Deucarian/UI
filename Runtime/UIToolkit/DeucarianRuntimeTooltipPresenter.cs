@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Deucarian.Common;
 using Deucarian.Theming;
 using Deucarian.Theming.UIToolkit;
 using UnityEngine;
@@ -30,7 +29,7 @@ namespace Deucarian.UI
         private readonly Component themeContext;
         private readonly VisualElement sourceRoot;
         private readonly VisualElement tooltipRoot;
-        private readonly RuntimeTooltipLayer ownedLayer;
+        private readonly DeucarianUIOverlayLease ownedLayer;
         private readonly VisualElement bubble;
         private readonly Label label;
         private readonly List<VisualElement> targets =
@@ -58,9 +57,14 @@ namespace Deucarian.UI
 
         /// <summary>
         /// Creates a dedicated package-owned tooltip document above all normal
-        /// product UI. Use this overload for runtime UI made from one or more
-        /// UIDocuments.
+        /// product UI. The source document must already be configured through
+        /// <see cref="DeucarianUIRuntime.Configure"/> so all documents share
+        /// the canonical panel contract.
         /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// The source document is not configured with the canonical package
+        /// PanelSettings or does not belong to a loaded scene.
+        /// </exception>
         public static DeucarianRuntimeTooltipPresenter CreateForDocument(
             Component context,
             UIDocument sourceDocument)
@@ -70,13 +74,18 @@ namespace Deucarian.UI
                 sourceDocument != null
                     ? sourceDocument.rootVisualElement
                     : null,
-                RuntimeTooltipLayer.Acquire(sourceDocument));
+                sourceDocument != null
+                    ? DeucarianUIOverlayHost.Acquire(
+                        sourceDocument,
+                        DeucarianUISurfaceRole.Tooltip,
+                        "DeucarianRuntimeTooltipPresenter")
+                    : null);
         }
 
         private DeucarianRuntimeTooltipPresenter(
             Component context,
             VisualElement root,
-            RuntimeTooltipLayer layer)
+            DeucarianUIOverlayLease layer)
             : this(
                 context,
                 root,
@@ -89,7 +98,7 @@ namespace Deucarian.UI
             Component context,
             VisualElement eventRoot,
             VisualElement renderRoot,
-            RuntimeTooltipLayer layer)
+            DeucarianUIOverlayLease layer)
         {
             themeContext = context;
             sourceRoot = eventRoot;
@@ -267,7 +276,7 @@ namespace Deucarian.UI
             bubble?.UnregisterCallback<GeometryChangedEvent>(
                 OnBubbleGeometryChanged);
             bubble?.RemoveFromHierarchy();
-            ownedLayer?.Release();
+            ownedLayer?.Dispose();
         }
 
         private void OnPointerEnter(PointerEnterEvent evt)
@@ -687,120 +696,6 @@ namespace Deucarian.UI
             !float.IsNaN(value) &&
             !float.IsInfinity(value) &&
             value > 0f;
-
-        private sealed class RuntimeTooltipLayer
-        {
-            private const string ObjectName =
-                "DeucarianRuntimeTooltipLayer";
-            private static readonly List<RuntimeTooltipLayer> Layers =
-                new List<RuntimeTooltipLayer>();
-
-            private readonly GameObject layerObject;
-            private readonly PanelSettings sourcePanelSettings;
-            private readonly PanelSettings overlayPanelSettings;
-            private int leaseCount;
-
-            private RuntimeTooltipLayer(PanelSettings settings)
-            {
-                sourcePanelSettings = settings;
-                overlayPanelSettings = UnityEngine.Object.Instantiate(
-                    settings);
-                overlayPanelSettings.name =
-                    "DeucarianRuntimeTooltipPanelSettings";
-                // This is a compositing layer. Clearing either buffer from the
-                // topmost panel could erase the world or UI rendered below it.
-                overlayPanelSettings.clearColor = false;
-                overlayPanelSettings.clearDepthStencil = false;
-                overlayPanelSettings.sortingOrder =
-                    DeucarianUIDepth.Tooltip;
-                layerObject = new GameObject(ObjectName)
-                {
-                    hideFlags = HideFlags.DontSave
-                };
-                Document = layerObject.AddComponent<UIDocument>();
-                Document.panelSettings = overlayPanelSettings;
-                Document.sortingOrder = DeucarianUIDepth.Tooltip;
-                Root = Document.rootVisualElement;
-                Root.Clear();
-                Root.pickingMode = PickingMode.Ignore;
-                Root.style.position = Position.Absolute;
-                Root.style.left = 0f;
-                Root.style.right = 0f;
-                Root.style.top = 0f;
-                Root.style.bottom = 0f;
-            }
-
-            public UIDocument Document { get; }
-            public VisualElement Root { get; }
-
-            public static RuntimeTooltipLayer Acquire(
-                UIDocument sourceDocument)
-            {
-                if (sourceDocument == null)
-                {
-                    return null;
-                }
-
-                PanelSettings settings = sourceDocument.panelSettings;
-                if (settings == null)
-                {
-                    settings = DeucarianUIRuntimeAssets
-                        .LoadRuntimePanelSettings();
-                    if (settings != null)
-                    {
-                        sourceDocument.panelSettings = settings;
-                    }
-                }
-
-                if (settings == null)
-                {
-                    return null;
-                }
-
-                for (int i = Layers.Count - 1; i >= 0; i--)
-                {
-                    RuntimeTooltipLayer candidate = Layers[i];
-                    if (candidate == null ||
-                        candidate.layerObject == null)
-                    {
-                        Layers.RemoveAt(i);
-                        continue;
-                    }
-
-                    if (candidate.sourcePanelSettings == settings)
-                    {
-                        candidate.leaseCount++;
-                        return candidate;
-                    }
-                }
-
-                var layer = new RuntimeTooltipLayer(settings)
-                {
-                    leaseCount = 1
-                };
-                Layers.Add(layer);
-                return layer;
-            }
-
-            public void Release()
-            {
-                leaseCount = Mathf.Max(0, leaseCount - 1);
-                if (leaseCount > 0)
-                {
-                    return;
-                }
-
-                Layers.Remove(this);
-                if (Document != null &&
-                    Document.panelSettings == overlayPanelSettings)
-                {
-                    Document.panelSettings = null;
-                }
-
-                UnityObjectUtility.DestroySafely(overlayPanelSettings);
-                UnityObjectUtility.DestroySafely(layerObject);
-            }
-        }
 
         private static bool HasTooltip(VisualElement target) =>
             target != null &&

@@ -19,8 +19,26 @@ namespace Deucarian.UI
         public float MaximumWidth { get; set; } = ReferenceMaximumWidth;
         public float ExpandedFallbackHeight { get; set; } =
             ReferenceExpandedFallbackHeight;
-        public int SortingOrder { get; set; } =
-            DeucarianUIDepth.Menu;
+        [Obsolete(
+            "Menu sorting is centrally owned. The morphing menu always uses " +
+            "DeucarianUISurfaceRole.Menu.")]
+        public int SortingOrder
+        {
+            get => DeucarianUIDepth.Resolve(
+                DeucarianUISurfaceRole.Menu);
+            set
+            {
+                int canonical = DeucarianUIDepth.Resolve(
+                    DeucarianUISurfaceRole.Menu);
+                if (value != canonical)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(value),
+                        value,
+                        "The morphing menu sorting order is package-owned.");
+                }
+            }
+        }
         public string OpenTooltip { get; set; } = "Open menu";
         public string CloseTooltip { get; set; } = "Close menu";
         public Func<bool> ShouldAnimate { get; set; }

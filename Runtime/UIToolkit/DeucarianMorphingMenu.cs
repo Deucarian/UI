@@ -40,7 +40,6 @@ namespace Deucarian.UI
         private DeucarianThemeProvider themeProvider;
         private GameObject documentObject;
         private Coroutine morphRoutine;
-        private PanelSettings runtimePanelSettings;
         private IDisposable inputGuard;
         private bool expanded;
         private bool visible = true;
@@ -189,18 +188,6 @@ namespace Deucarian.UI
                 Root.RemoveFromHierarchy();
             }
 
-            if (runtimePanelSettings != null)
-            {
-                if (Document != null &&
-                    Document.panelSettings == runtimePanelSettings)
-                {
-                    Document.panelSettings = null;
-                }
-
-                UnityObjectUtility.DestroySafely(runtimePanelSettings);
-                runtimePanelSettings = null;
-            }
-
             if (documentObject != null)
             {
                 UnityObjectUtility.DestroySafely(documentObject);
@@ -233,22 +220,11 @@ namespace Deucarian.UI
 
         private void EnsureDocument()
         {
-            PanelSettings settings =
-                DeucarianUIRuntimeAssets.LoadRuntimePanelSettings();
             documentObject = new GameObject(DocumentObjectName);
             Document = documentObject.AddComponent<UIDocument>();
-            if (settings != null)
-            {
-                Document.panelSettings = settings;
-            }
-            else if (Document.panelSettings == null)
-            {
-                runtimePanelSettings =
-                    ScriptableObject.CreateInstance<PanelSettings>();
-                runtimePanelSettings.name =
-                    "DeucarianMorphingMenuPanelSettings";
-                Document.panelSettings = runtimePanelSettings;
-            }
+            DeucarianUIRuntime.Configure(
+                Document,
+                DeucarianUISurfaceRole.Menu);
 
             UIDocument parentDocument =
                 host.GetComponentInParent<UIDocument>(true);
@@ -257,8 +233,6 @@ namespace Deucarian.UI
             {
                 documentObject.transform.SetParent(host.transform, false);
             }
-
-            Document.sortingOrder = layout.SortingOrder;
         }
 
         private void Build(VisualElement body)

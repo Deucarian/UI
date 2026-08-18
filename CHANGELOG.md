@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.6 - 2026-08-18
+
+- Made the UI package the central screen-space layering authority through semantic surface roles and canonical UI Toolkit/uGUI configuration APIs.
+- Added a public ref-counted transient overlay host with isolated menu, modal, and tooltip leases, non-clearing cloned panel settings, managed-layer diagnostics, and scene-scoped lifetime for safe additive-scene unloading.
+- Added a reusable Editor validator that reports consumer-owned PanelSettings and direct screen-space depth configuration with exact source diagnostics and narrow non-UI renderer sorting allowances.
+- Refactored runtime tooltips and the morphing menu to consume the shared composition contract instead of creating or ordering documents locally.
+
 ## 0.2.5 - 2026-08-18
 
 - Added shared semantic UI depth layers and a dedicated topmost runtime tooltip document.

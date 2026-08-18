@@ -5,6 +5,7 @@
     "Deucarian.Common",
     "Deucarian.Theming",
     "Deucarian.UI",
+    "Deucarian.UI.Editor",
     "UnityEngine.UIElementsModule"
   ],
   "includePlatforms": [

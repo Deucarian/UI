@@ -9,7 +9,7 @@ Follow the canonical Deucarian governance docs in [Package Registry](https://git
 
 This package owns:
 
-- Reusable runtime UI presentation primitives, UI motion helpers, glass panel application, icon swap behavior, control island geometry, icon button styling, and scrubber chrome.
+- Reusable runtime UI presentation primitives, semantic screen-space UI layering, ref-counted transient overlays, UI motion helpers, glass panel application, icon swap behavior, control island geometry, icon button styling, and scrubber chrome.
 
 Registered capabilities:
 - `ui-presentation-primitives`
@@ -18,6 +18,11 @@ Registered capabilities:
 This package must not own:
 
 - Collection-to-prefab binding, UI routing/flow, generic theme governance, XR world controls, app-specific report/media behavior, camera navigation, or package installation.
+
+Other runtime packages choose semantic surface roles and consume
+`DeucarianUIRuntime`/`DeucarianUIOverlayHost`. They must not ship competing
+PanelSettings assets, create PanelSettings fallbacks, or assign private numeric
+screen-space sorting orders.
 
 ## Dependencies
 

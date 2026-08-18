@@ -9,7 +9,9 @@
   "runtimeAssemblies": [
     "Deucarian.UI"
   ],
-  "editorAssemblies": [],
+  "editorAssemblies": [
+    "Deucarian.UI.Editor"
+  ],
   "sampleAssemblies": [
     "Deucarian.UI.Samples.FrostedControlIsland"
   ],

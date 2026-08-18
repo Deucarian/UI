@@ -2,11 +2,11 @@
 
 ## What this is
 
-Deucarian UI provides reusable runtime UI presentation primitives for Deucarian Unity projects. It owns shared UI motion, glass panel application, icon swap behavior, icon button layout, control island geometry, icon button interaction state, and lightweight scrubber chrome.
+Deucarian UI provides reusable runtime UI presentation primitives for Deucarian Unity projects. It owns shared screen-space UI layering and transient overlays alongside UI motion, glass panel application, icon swap behavior, icon button layout, control island geometry, icon button interaction state, and lightweight scrubber chrome.
 
 Package ID: `com.deucarian.ui`
 
-Current package version: `0.2.5`.
+Current package version: `0.2.6`.
 
 ## When to use it
 
@@ -68,6 +68,53 @@ public static class UiIslandSetup
 }
 ```
 
+## Runtime layering contract
+
+`com.deucarian.ui` is the single authority for Deucarian screen-space UI
+ordering. Consumers choose a semantic role and let the package assign both the
+canonical PanelSettings and the concrete sorting depth:
+
+```csharp
+DeucarianUIRuntime.Configure(
+    document,
+    DeucarianUISurfaceRole.PrimaryControls);
+
+DeucarianUIRuntime.ConfigureScreenSpaceCanvas(
+    statusCanvas,
+    DeucarianUISurfaceRole.Status);
+```
+
+The guaranteed order is:
+
+`PrimaryControls < ContextControls < MediaControls < Status < Menu < Modal < Tooltip`
+
+Use `DeucarianUIRuntime.IsConfigured(...)` for runtime diagnostics and tests,
+and `DeucarianUIRuntime.HasCanonicalPanelSettings(...)` when only canonical
+PanelSettings identity matters. Consumer packages must not create or ship a
+second PanelSettings asset, instantiate PanelSettings at runtime, or assign
+numeric `sortingOrder` values.
+
+Transient menu, modal, and tooltip content can acquire an isolated container
+from `DeucarianUIOverlayHost`. Its explicit `DeucarianUIOverlayLease` owns the
+container lifetime; leases sharing a source scene and role share one
+non-clearing overlay document, and the final disposal releases that document.
+The overlay object lives in the source `UIDocument` scene, so unloading one
+additive scene cannot invalidate overlay leases owned by another scene. The
+package runtime tooltip presenter already composes this host and requires a
+source document configured through `DeucarianUIRuntime.Configure`, so tooltip
+consumers only bind tooltip text and targets.
+
+This contract covers screen-space UI Toolkit and uGUI presentation. Sprite
+renderer ordering, world-space XR canvases, and editor windows remain with
+their respective rendering, XR UI, and Editor package owners.
+
+Editor tests can enforce that boundary with
+`DeucarianUILayeringArchitectureValidator.ValidateRuntimeRoot(...)`. It reports
+the exact file, line, column, and rule for consumer-owned PanelSettings assets
+or references and direct panel/depth assignments. The optional allowlist accepts
+only exact Runtime-relative C# files and suppresses only non-UI
+`sortingOrder` assignments; all panel and canvas ownership rules still apply.
+
 ## Samples
 
 - `Samples~/Frosted Control Island`: default frosted control island preset for rounded-square icon buttons, compact stacked rows, and compact scrubber sizing.
@@ -88,6 +135,10 @@ public static class UiIslandSetup
 - `DeucarianMorphingMenu` and `DeucarianMorphingMenuLayout`: complete package-owned top-right menu scaffold with canonical state glyphs, responsive glass chrome, motion, visibility/picking behavior, theme presentation, and consumer-neutral body/input hooks.
 - `DeucarianControlIslandColorRoleIds`: consumer-neutral active/inactive palette roles for branded viewer control islands.
 - `DeucarianUIRuntimeAssets`: canonical package-owned stylesheet and runtime PanelSettings resource access.
+- `DeucarianUISurfaceRole`, `DeucarianUIDepth`, and `DeucarianUIRuntime`: semantic, package-owned screen-space ordering plus canonical UI Toolkit PanelSettings composition for UI Toolkit and uGUI consumers.
+- `DeucarianUIOverlayHost` and `DeucarianUIOverlayLease`: ref-counted, non-clearing transient overlay documents with isolated consumer containers.
+- `DeucarianRuntimeTooltipPresenter`: target-aware runtime tooltip presentation composed on the package-owned topmost overlay.
+- `DeucarianUILayeringArchitectureValidator` (Editor): reusable package-boundary validation for canonical PanelSettings and semantic screen-space depth ownership.
 - `DeucarianControlIslandProfile` and `DeucarianControlIslandProfiles`: Comfortable, Standard, and Compact geometry resolved from `DeucarianThemeDensity`. Legacy Frosted Glass, Fluent Acrylic, and Material Dark IDs remain supported when density is unspecified. All profiles share the same 4 px item margin and vertical inset rhythm, while panel radius resolves independently from the style's shape profile.
 - `DeucarianIconButtonStyle`: reusable icon button visual state, palette, interaction, and state application helpers.
 - `DeucarianScrubberStyle`: reusable compact scrubber metrics, palette, and state application helpers.
@@ -118,6 +169,7 @@ Does not own:
 - If UI Toolkit glass styling does not show, confirm the target `VisualElement` is attached and receiving the intended classes/styles.
 - If sample values do not appear, import the `Frosted Control Island` sample through Unity Package Manager or the Package Installer before looking for the preset.
 - If icons or labels are wrong, keep the mapping in the consuming app; this package provides layout and state primitives, not app command content.
+- If `DeucarianUIRuntime.IsConfigured` is false, configure the document or screen-space canvas through the runtime API instead of assigning PanelSettings or sorting order locally.
 
 ## Validation
 
