@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DeucarianRuntimePanelTextSettings
   m_EditorClassIdentifier:
   m_Version:
-  m_DefaultFontAsset: {fileID: 11400000, guid: 44dbf8587c70a9448953f94b45b568c9, type: 2}
+  m_DefaultFontAsset: {fileID: 0}
   m_DefaultFontAssetPath: Fonts/
   m_FallbackFontAssets: []
   m_MatchMaterialPreset: 0
