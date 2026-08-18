@@ -11,6 +11,8 @@ namespace Deucarian.UI
             Root + "DeucarianControlIsland";
         public const string RuntimePanelSettings =
             Root + "DeucarianRuntimePanelSettings";
+        public const string RuntimePanelTextSettings =
+            Root + "DeucarianRuntimePanelTextSettings";
         public const string ControlIslandStyle =
             ControlIslandStyleSheet;
         public const string PanelSettings =
@@ -21,5 +23,8 @@ namespace Deucarian.UI
 
         public static PanelSettings LoadRuntimePanelSettings() =>
             Resources.Load<PanelSettings>(RuntimePanelSettings);
+
+        public static PanelTextSettings LoadRuntimePanelTextSettings() =>
+            Resources.Load<PanelTextSettings>(RuntimePanelTextSettings);
     }
 }

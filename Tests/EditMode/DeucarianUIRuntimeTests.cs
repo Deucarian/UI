@@ -1,5 +1,6 @@
 using System;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -101,6 +102,30 @@ namespace Deucarian.UI.Tests
                 UnityEngine.Object.DestroyImmediate(root);
                 UnityEngine.Object.DestroyImmediate(foreignSettings);
             }
+        }
+
+        [Test]
+        public void CanonicalPanelOwnsDeterministicRuntimeTypography()
+        {
+            PanelSettings panelSettings =
+                DeucarianUIRuntimeAssets.LoadRuntimePanelSettings();
+            PanelTextSettings textSettings =
+                DeucarianUIRuntimeAssets.LoadRuntimePanelTextSettings();
+
+            Assert.That(panelSettings, Is.Not.Null);
+            Assert.That(textSettings, Is.Not.Null);
+            Assert.That(panelSettings.textSettings, Is.SameAs(textSettings));
+
+            SerializedObject serializedTextSettings =
+                new SerializedObject(textSettings);
+            SerializedProperty defaultFont =
+                serializedTextSettings.FindProperty("m_DefaultFontAsset");
+            Assert.That(defaultFont, Is.Not.Null);
+            Assert.That(
+                defaultFont.objectReferenceValue,
+                Is.Not.Null,
+                "The shared panel must render text without consumer-owned " +
+                "TMP Essential Resources.");
         }
 
         [Test]
