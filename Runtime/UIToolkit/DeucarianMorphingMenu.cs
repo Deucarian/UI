@@ -23,6 +23,12 @@ namespace Deucarian.UI
         public const string ChromeName = "DeucarianMorphingMenuChrome";
         public const string ButtonHostName = "DeucarianMorphingMenuButtonHost";
         public const string MenuIconName = "DeucarianMorphingMenuSettingsIcon";
+        public const string InformationIconName =
+            "DeucarianMorphingMenuInformationIcon";
+        public const string InformationIconDotName =
+            "DeucarianMorphingMenuInformationDot";
+        public const string InformationIconStemName =
+            "DeucarianMorphingMenuInformationStem";
         public const string CloseIconName = "DeucarianMorphingMenuCloseIcon";
         public const string MenuIconLineNamePrefix =
             "DeucarianMorphingMenuSettingsLine";
@@ -49,6 +55,8 @@ namespace Deucarian.UI
             DeucarianMorphingMenuMotion.CollapsedSize;
         private float expansionProgress;
         private float panelWidth;
+        private float rightInset;
+        private DeucarianMorphingMenuIcon collapsedIcon;
         private bool isDisposed;
 
         public DeucarianMorphingMenu(
@@ -60,6 +68,8 @@ namespace Deucarian.UI
                 throw new ArgumentNullException(nameof(host));
             this.layout = layout ?? new DeucarianMorphingMenuLayout();
             this.layout.Validate();
+            rightInset = ResolveNonNegativeFinite(this.layout.RightInset);
+            collapsedIcon = this.layout.CollapsedIcon;
             EnsureDocument();
             Build(body ?? new VisualElement());
             runtimeTooltip =
@@ -95,6 +105,8 @@ namespace Deucarian.UI
         public VisualElement Body { get; private set; }
         public bool IsExpanded => expanded;
         public bool IsVisible => visible;
+        public float RightInset => rightInset;
+        public DeucarianMorphingMenuIcon CollapsedIcon => collapsedIcon;
         public float ExpansionProgress => expansionProgress;
         public DeucarianRuntimeTooltipPresenter RuntimeTooltip =>
             runtimeTooltip;
@@ -131,6 +143,53 @@ namespace Deucarian.UI
         {
             visible = value;
             ApplyVisibility();
+        }
+
+        /// <summary>
+        /// Changes the semantic glyph displayed while the menu is collapsed.
+        /// </summary>
+        public void SetCollapsedIcon(DeucarianMorphingMenuIcon value)
+        {
+            ValidateCollapsedIcon(value);
+            if (collapsedIcon == value)
+            {
+                return;
+            }
+
+            collapsedIcon = value;
+            VisualElement previousIcon = MenuIcon;
+            MenuIcon = BuildCollapsedIcon(value);
+            MenuIcon.style.opacity = 1f - expansionProgress;
+            DeucarianControlIslandVisualStyle.AddIconClasses(MenuIcon);
+            previousIcon?.RemoveFromHierarchy();
+            Button.Insert(0, MenuIcon);
+            ApplyTheme();
+        }
+
+        /// <summary>
+        /// Repositions the menu without rebuilding its document or body.
+        /// </summary>
+        public void SetRightInset(float value)
+        {
+            float resolved = ResolveNonNegativeFinite(value);
+            if (Mathf.Approximately(rightInset, resolved))
+            {
+                return;
+            }
+
+            rightInset = resolved;
+            MenuRoot.style.right = rightInset;
+            float availableWidth = ResolvePanelWidth();
+            MenuRoot.style.width = ResolveConfiguredExpandedWidth(
+                availableWidth);
+            // Expansion callbacks are raised before their new morph starts.
+            // Keep an in-flight or just-requested morph intact while moving
+            // slots; only resize chrome that is already fully expanded.
+            if (expanded && expansionProgress >= 0.999f)
+            {
+                ApplyStateImmediately(true);
+                ApplyTheme();
+            }
         }
 
         public void RefreshPresentation()
@@ -210,12 +269,27 @@ namespace Deucarian.UI
             float edgeMargin,
             float maximumWidth)
         {
+            return ResolveExpandedWidth(
+                availableWidth,
+                edgeMargin,
+                edgeMargin,
+                maximumWidth);
+        }
+
+        public static float ResolveExpandedWidth(
+            float availableWidth,
+            float leftEdgeMargin,
+            float rightInset,
+            float maximumWidth)
+        {
             return Mathf.Clamp(
-                availableWidth - Mathf.Max(0f, edgeMargin) * 2f,
+                ResolveNonNegativeFinite(availableWidth) -
+                ResolveNonNegativeFinite(leftEdgeMargin) -
+                ResolveNonNegativeFinite(rightInset),
                 DeucarianMorphingMenuMotion.CollapsedSize,
                 Mathf.Max(
                     DeucarianMorphingMenuMotion.CollapsedSize,
-                    maximumWidth));
+                    ResolveNonNegativeFinite(maximumWidth)));
         }
 
         private void EnsureDocument()
@@ -261,7 +335,7 @@ namespace Deucarian.UI
             Chrome = CreateChrome();
             ButtonHost = CreateButtonHost();
             Button = CreateButton();
-            MenuIcon = BuildSettingsIcon();
+            MenuIcon = BuildCollapsedIcon(collapsedIcon);
             CloseIcon = BuildCloseIcon();
             CloseIcon.style.opacity = 0f;
             DeucarianControlIslandVisualStyle.AddIconClasses(MenuIcon);
@@ -307,7 +381,7 @@ namespace Deucarian.UI
                 pickingMode = PickingMode.Ignore
             };
             root.style.position = Position.Absolute;
-            root.style.right = layout.EdgeMargin;
+            root.style.right = rightInset;
             root.style.top = layout.EdgeMargin;
             root.style.width = layout.MaximumWidth;
             root.style.alignItems = Align.FlexEnd;
@@ -427,6 +501,46 @@ namespace Deucarian.UI
             }
 
             return icon;
+        }
+
+        private static VisualElement BuildInformationIcon()
+        {
+            VisualElement icon = CreateIcon(InformationIconName);
+            VisualElement dot = new VisualElement
+            {
+                name = InformationIconDotName,
+                pickingMode = PickingMode.Ignore
+            };
+            dot.style.position = Position.Absolute;
+            dot.style.left = 8f;
+            dot.style.top = 2f;
+            dot.style.width = 2f;
+            dot.style.height = 2f;
+            ApplyRadius(dot, 1f);
+            icon.Add(dot);
+
+            VisualElement stem = new VisualElement
+            {
+                name = InformationIconStemName,
+                pickingMode = PickingMode.Ignore
+            };
+            stem.style.position = Position.Absolute;
+            stem.style.left = 8f;
+            stem.style.top = 7f;
+            stem.style.width = 2f;
+            stem.style.height = 9f;
+            ApplyRadius(stem, 1f);
+            icon.Add(stem);
+            return icon;
+        }
+
+        private static VisualElement BuildCollapsedIcon(
+            DeucarianMorphingMenuIcon value)
+        {
+            ValidateCollapsedIcon(value);
+            return value == DeucarianMorphingMenuIcon.Information
+                ? BuildInformationIcon()
+                : BuildSettingsIcon();
         }
 
         private static VisualElement BuildCloseIcon()
@@ -649,7 +763,8 @@ namespace Deucarian.UI
                 ? rootWidth
                 : Mathf.Max(
                     DeucarianMorphingMenuMotion.CollapsedSize +
-                    layout.EdgeMargin * 2f,
+                    layout.EdgeMargin +
+                    rightInset,
                     Screen.width);
         }
 
@@ -658,7 +773,21 @@ namespace Deucarian.UI
             return ResolveExpandedWidth(
                 availableWidth,
                 layout.EdgeMargin,
+                rightInset,
                 layout.MaximumWidth);
+        }
+
+        private static void ValidateCollapsedIcon(
+            DeucarianMorphingMenuIcon value)
+        {
+            if (value != DeucarianMorphingMenuIcon.Settings &&
+                value != DeucarianMorphingMenuIcon.Information)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(value),
+                    value,
+                    "Unknown morphing-menu collapsed icon.");
+            }
         }
 
         private void UpdateControlCopy()
@@ -888,6 +1017,13 @@ namespace Deucarian.UI
             return !float.IsNaN(value) &&
                    !float.IsInfinity(value) &&
                    value > 0f;
+        }
+
+        private static float ResolveNonNegativeFinite(float value)
+        {
+            return float.IsNaN(value) || float.IsInfinity(value)
+                ? 0f
+                : Mathf.Max(0f, value);
         }
     }
 }

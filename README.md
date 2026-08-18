@@ -6,7 +6,7 @@ Deucarian UI provides reusable runtime UI presentation primitives for Deucarian 
 
 Package ID: `com.deucarian.ui`
 
-Current package version: `0.2.6`.
+Current package version: `0.2.7`.
 
 ## When to use it
 
@@ -104,6 +104,13 @@ package runtime tooltip presenter already composes this host and requires a
 source document configured through `DeucarianUIRuntime.Configure`, so tooltip
 consumers only bind tooltip text and targets.
 
+The top-right viewer menu composition follows that same contract.
+`DeucarianViewerMenuCluster` owns the information/settings button slots,
+ensures only one menu can be expanded, moves the expanded menu to the edge,
+and restores both collapsed buttons afterward. Each body remains
+consumer-supplied, while chrome, glyphs, responsive placement, input surfaces,
+tooltips, layering, motion, and lifecycle stay package-owned.
+
 This contract covers screen-space UI Toolkit and uGUI presentation. Sprite
 renderer ordering, world-space XR canvases, and editor windows remain with
 their respective rendering, XR UI, and Editor package owners.
@@ -132,7 +139,8 @@ only exact Runtime-relative C# files and suppresses only non-UI
 - `DeucarianUGUIGlassPanel`: applies Deucarian frosted glass style to uGUI images/graphics.
 - `DeucarianControlIslandStyle`: reusable compact control island, icon button, and scrubber geometry application.
 - `DeucarianControlIslandVisualStyle`: complete package-owned control-island composition for layout, glass chrome, semantic theme states, scrubbers, and centered overlay icons.
-- `DeucarianMorphingMenu` and `DeucarianMorphingMenuLayout`: complete package-owned top-right menu scaffold with canonical state glyphs, responsive glass chrome, motion, visibility/picking behavior, theme presentation, and consumer-neutral body/input hooks.
+- `DeucarianMorphingMenu`, `DeucarianMorphingMenuLayout`, and `DeucarianMorphingMenuIcon`: complete package-owned top-right menu scaffold with Settings or Information collapsed glyphs, configurable live right-inset placement, responsive glass chrome, motion, visibility/picking behavior, theme presentation, and consumer-neutral body/input hooks. Existing callers retain the Settings glyph and edge-aligned placement by default.
+- `DeucarianViewerMenuCluster`, `DeucarianViewerMenuClusterLayout`, and `DeucarianViewerMenuKind`: canonical two-menu viewer composition with Information in the adjacent left slot, Settings in the edge slot, mutual exclusion, edge-slot expansion, centralized events, consumer-supplied bodies, separate per-menu expanded dimensions, and separate body-theme callbacks.
 - `DeucarianControlIslandColorRoleIds`: consumer-neutral active/inactive palette roles for branded viewer control islands.
 - `DeucarianUIRuntimeAssets`: canonical package-owned stylesheet and runtime PanelSettings resource access.
 - `DeucarianUISurfaceRole`, `DeucarianUIDepth`, and `DeucarianUIRuntime`: semantic, package-owned screen-space ordering plus canonical UI Toolkit PanelSettings composition for UI Toolkit and uGUI consumers.

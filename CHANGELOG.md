@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.7 - 2026-08-18
+
+- Added package-owned Settings and Information collapsed-glyph variants plus configurable, runtime-updatable top-right menu insets without changing existing single-menu defaults.
+- Added the canonical viewer information/settings menu cluster with donor-aligned adjacent collapsed slots, mutual exclusion, edge-slot expansion, centralized events and lifecycle, shared input/theme integration, per-menu expanded dimensions, and consumer-specific body theme hooks.
+- Added parity coverage for exact glyph trees, responsive positioning, menu/tooltip depth, composition behavior, hook disposal, and backward-compatible settings-menu defaults.
+
 ## 0.2.6 - 2026-08-18
 
 - Made the UI package the central screen-space layering authority through semantic surface roles and canonical UI Toolkit/uGUI configuration APIs.

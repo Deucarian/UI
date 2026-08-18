@@ -15,7 +15,21 @@ namespace Deucarian.UI
         public const float ReferenceMaximumWidth = 300f;
         public const float ReferenceExpandedFallbackHeight = 196f;
 
+        private float? rightInset;
+
         public float EdgeMargin { get; set; } = ReferenceEdgeMargin;
+        /// <summary>
+        /// Distance from the viewport's right edge. When it is not explicitly
+        /// assigned, it follows <see cref="EdgeMargin"/> for backward
+        /// compatibility.
+        /// </summary>
+        public float RightInset
+        {
+            get => rightInset ?? EdgeMargin;
+            set => rightInset = value;
+        }
+        public DeucarianMorphingMenuIcon CollapsedIcon { get; set; } =
+            DeucarianMorphingMenuIcon.Settings;
         public float MaximumWidth { get; set; } = ReferenceMaximumWidth;
         public float ExpandedFallbackHeight { get; set; } =
             ReferenceExpandedFallbackHeight;
@@ -54,13 +68,34 @@ namespace Deucarian.UI
 
         internal void Validate()
         {
-            EdgeMargin = Mathf.Max(0f, EdgeMargin);
+            EdgeMargin = ResolveNonNegativeFinite(EdgeMargin);
+            if (rightInset.HasValue)
+            {
+                rightInset = ResolveNonNegativeFinite(rightInset.Value);
+            }
+
+            if (CollapsedIcon != DeucarianMorphingMenuIcon.Settings &&
+                CollapsedIcon != DeucarianMorphingMenuIcon.Information)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(CollapsedIcon),
+                    CollapsedIcon,
+                    "Unknown morphing-menu collapsed icon.");
+            }
+
             MaximumWidth = Mathf.Max(
                 DeucarianMorphingMenuMotion.CollapsedSize,
-                MaximumWidth);
+                ResolveNonNegativeFinite(MaximumWidth));
             ExpandedFallbackHeight = Mathf.Max(
                 DeucarianMorphingMenuMotion.CollapsedSize,
-                ExpandedFallbackHeight);
+                ResolveNonNegativeFinite(ExpandedFallbackHeight));
+        }
+
+        private static float ResolveNonNegativeFinite(float value)
+        {
+            return float.IsNaN(value) || float.IsInfinity(value)
+                ? 0f
+                : Mathf.Max(0f, value);
         }
     }
 }
