@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4 - 2026-08-18
+
+- Added the complete package-owned top-right morphing-menu scaffold, including canonical settings/close glyphs, centered state-icon overlay, responsive chrome, motion, visibility/picking behavior, theme presentation, and consumer-neutral input and body hooks.
+
 ## 0.2.3 - 2026-08-18
 
 - Added consumer-neutral active/inactive control-island roles, with reference-theme fallbacks, so branded viewers preserve their authored toolbar palettes without application-specific IDs.
