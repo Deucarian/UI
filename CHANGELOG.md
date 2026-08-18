@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.5 - 2026-08-18
+
+- Added shared semantic UI depth layers and a dedicated topmost runtime tooltip document.
+- Made runtime tooltips anchor around their target, prefer the open side of the viewport, follow transformed controls, and render through a non-clearing topmost overlay.
+- Preserved morph-owned icon cross-fades after theme refreshes and kept the package menu on its canonical panel when a host owns an incompatible UI document.
+
 ## 0.2.4 - 2026-08-18
 
 - Added the complete package-owned top-right morphing-menu scaffold, including canonical settings/close glyphs, centered state-icon overlay, responsive chrome, motion, visibility/picking behavior, theme presentation, and consumer-neutral input and body hooks.

@@ -31,6 +31,135 @@ namespace Deucarian.UI.Tests
         }
 
         [Test]
+        public void RuntimeTooltipPlacesBottomControlTooltipAboveTarget()
+        {
+            Rect target = new Rect(400f, 390f, 40f, 36f);
+            Vector2 tooltipSize = new Vector2(320f, 46f);
+
+            Vector2 position =
+                DeucarianRuntimeTooltipPresenter.ResolvePlacement(
+                    target,
+                    target.position,
+                    new Vector2(880f, 523f),
+                    tooltipSize);
+
+            Rect tooltip = new Rect(position, tooltipSize);
+            Assert.That(tooltip.yMax, Is.LessThan(target.yMin));
+            Assert.False(tooltip.Overlaps(target));
+            Assert.That(position.x, Is.EqualTo(260f).Within(0.0001f));
+        }
+
+        [Test]
+        public void RuntimeTooltipPlacesTopControlTooltipBelowTarget()
+        {
+            Rect target = new Rect(780f, 20f, 40f, 36f);
+            Vector2 tooltipSize = new Vector2(240f, 46f);
+
+            Vector2 position =
+                DeucarianRuntimeTooltipPresenter.ResolvePlacement(
+                    target,
+                    target.position,
+                    new Vector2(880f, 523f),
+                    tooltipSize);
+
+            Rect tooltip = new Rect(position, tooltipSize);
+            Assert.That(tooltip.yMin, Is.GreaterThan(target.yMax));
+            Assert.False(tooltip.Overlaps(target));
+            Assert.That(position.x, Is.EqualTo(630f).Within(0.0001f));
+        }
+
+        [Test]
+        public void RuntimeTooltipCentersItsVisibleMinimumSize()
+        {
+            Rect target = new Rect(400f, 390f, 40f, 36f);
+            Vector2 visibleMinimumSize = new Vector2(180f, 34f);
+
+            Vector2 position =
+                DeucarianRuntimeTooltipPresenter.ResolvePlacement(
+                    target,
+                    target.position,
+                    new Vector2(880f, 523f),
+                    visibleMinimumSize);
+
+            Assert.That(
+                position.x + visibleMinimumSize.x * 0.5f,
+                Is.EqualTo(target.center.x).Within(0.0001f));
+            Assert.That(
+                position.y + visibleMinimumSize.y,
+                Is.LessThan(target.yMin));
+        }
+
+        [Test]
+        public void RuntimeTooltipLayerIsSharedAndAlwaysUsesTooltipDepth()
+        {
+            GameObject firstObject = new GameObject("First Tooltip Source");
+            GameObject secondObject = new GameObject("Second Tooltip Source");
+            UIDocument firstDocument = firstObject.AddComponent<UIDocument>();
+            UIDocument secondDocument = secondObject.AddComponent<UIDocument>();
+            PanelSettings settings =
+                ScriptableObject.CreateInstance<PanelSettings>();
+            settings.clearColor = true;
+            settings.clearDepthStencil = true;
+            firstDocument.panelSettings = settings;
+            secondDocument.panelSettings = settings;
+            DeucarianRuntimeTooltipPresenter first = null;
+            DeucarianRuntimeTooltipPresenter second = null;
+            UIDocument overlay = null;
+            try
+            {
+                first = DeucarianRuntimeTooltipPresenter.CreateForDocument(
+                    firstDocument,
+                    firstDocument);
+                second = DeucarianRuntimeTooltipPresenter.CreateForDocument(
+                    secondDocument,
+                    secondDocument);
+                overlay = first.OverlayDocument;
+
+                Assert.That(overlay, Is.Not.Null);
+                Assert.That(second.OverlayDocument, Is.SameAs(overlay));
+                Assert.That(overlay.panelSettings, Is.Not.SameAs(settings));
+                Assert.That(
+                    overlay.panelSettings.sortingOrder,
+                    Is.EqualTo(DeucarianUIDepth.Tooltip));
+                Assert.That(
+                    overlay.sortingOrder,
+                    Is.EqualTo(DeucarianUIDepth.Tooltip));
+                Assert.False(overlay.panelSettings.clearColor);
+                Assert.False(overlay.panelSettings.clearDepthStencil);
+                Assert.That(
+                    first.Bubble.style.minWidth.value.value,
+                    Is.EqualTo(180f));
+                Assert.That(
+                    first.Bubble.style.minHeight.value.value,
+                    Is.EqualTo(34f));
+                Assert.That(
+                    first.Bubble.parent,
+                    Is.SameAs(overlay.rootVisualElement));
+                Assert.That(
+                    second.Bubble.parent,
+                    Is.SameAs(overlay.rootVisualElement));
+
+                first.Dispose();
+                first.Dispose();
+                Assert.Throws<System.ObjectDisposedException>(() =>
+                    first.Bind(new VisualElement()));
+                first = null;
+                Assert.That(overlay, Is.Not.Null);
+                second.Dispose();
+                second = null;
+                Assert.True(overlay == null);
+            }
+            finally
+            {
+                first?.Dispose();
+                second?.Dispose();
+                Object.DestroyImmediate(firstObject);
+                Object.DestroyImmediate(secondObject);
+                Object.DestroyImmediate(settings);
+            }
+        }
+
+        [Test]
         public void AnimatedVisibilityImmediateProgressAppliesOpacityScaleAndTranslate()
         {
             VisualElement element = new VisualElement();

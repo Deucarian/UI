@@ -34,6 +34,11 @@ namespace Deucarian.UI.Tests
             {
                 name = "ConsumerBody"
             };
+            var bodyTooltipControl = new Button
+            {
+                tooltip = "Consumer tooltip"
+            };
+            body.Add(bodyTooltipControl);
 
             menu = new DeucarianMorphingMenu(host, body);
 
@@ -53,6 +58,13 @@ namespace Deucarian.UI.Tests
                 menu.Button,
                 menu.Root.Q<Button>(DeucarianMorphingMenu.ButtonName));
             Assert.AreSame(body, menu.Panel[0]);
+            Assert.NotNull(menu.RuntimeTooltip);
+            Assert.IsTrue(menu.RuntimeTooltip.IsBound(menu.Button));
+            Assert.IsTrue(
+                menu.RuntimeTooltip.IsBound(bodyTooltipControl));
+            Assert.That(
+                menu.RuntimeTooltip.OverlayDocument.sortingOrder,
+                Is.EqualTo(DeucarianUIDepth.Tooltip));
             Assert.AreEqual(PickingMode.Ignore, menu.Root.pickingMode);
             Assert.AreEqual(PickingMode.Ignore, menu.MenuRoot.pickingMode);
             Assert.AreEqual(PickingMode.Position, menu.Chrome.pickingMode);
@@ -313,6 +325,10 @@ namespace Deucarian.UI.Tests
                     new VisualElement());
 
                 Assert.AreNotSame(existingDocument, menu.Document);
+                Assert.AreNotSame(
+                    existingSettings,
+                    menu.Document.panelSettings);
+                Assert.IsNull(menu.Document.transform.parent);
                 Assert.AreSame(
                     existingContent,
                     existingDocument.rootVisualElement.Q<VisualElement>(
@@ -321,6 +337,11 @@ namespace Deucarian.UI.Tests
                     existingSettings,
                     existingDocument.panelSettings);
                 Assert.AreEqual(77, existingDocument.sortingOrder);
+
+                menu.OnDisable();
+                Assert.IsFalse(menu.Document.enabled);
+                menu.OnEnable();
+                Assert.IsTrue(menu.Document.enabled);
 
                 menu.Dispose();
                 menu = null;
@@ -333,6 +354,32 @@ namespace Deucarian.UI.Tests
                     existingSettings,
                     existingDocument.panelSettings);
                 Assert.AreEqual(77, existingDocument.sortingOrder);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(existingSettings);
+            }
+        }
+
+        [Test]
+        public void DedicatedDocumentFindsConflictUnderInactiveHost()
+        {
+            UIDocument existingDocument = root.AddComponent<UIDocument>();
+            PanelSettings existingSettings =
+                ScriptableObject.CreateInstance<PanelSettings>();
+            existingDocument.panelSettings = existingSettings;
+            root.SetActive(false);
+            try
+            {
+                menu = new DeucarianMorphingMenu(
+                    host,
+                    new VisualElement());
+
+                Assert.AreNotSame(
+                    existingSettings,
+                    menu.Document.panelSettings);
+                Assert.IsNull(menu.Document.transform.parent);
+                Assert.IsFalse(menu.Document.enabled);
             }
             finally
             {

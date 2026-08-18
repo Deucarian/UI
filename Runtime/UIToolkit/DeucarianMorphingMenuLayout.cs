@@ -19,7 +19,8 @@ namespace Deucarian.UI
         public float MaximumWidth { get; set; } = ReferenceMaximumWidth;
         public float ExpandedFallbackHeight { get; set; } =
             ReferenceExpandedFallbackHeight;
-        public int SortingOrder { get; set; } = 1121;
+        public int SortingOrder { get; set; } =
+            DeucarianUIDepth.Menu;
         public string OpenTooltip { get; set; } = "Open menu";
         public string CloseTooltip { get; set; } = "Close menu";
         public Func<bool> ShouldAnimate { get; set; }

@@ -36,6 +36,7 @@ namespace Deucarian.UI
         private readonly DeucarianMorphingMenuLayout layout;
         private readonly DeucarianIconButtonInteraction buttonInteraction =
             new DeucarianIconButtonInteraction();
+        private DeucarianRuntimeTooltipPresenter runtimeTooltip;
         private DeucarianThemeProvider themeProvider;
         private GameObject documentObject;
         private Coroutine morphRoutine;
@@ -62,6 +63,12 @@ namespace Deucarian.UI
             this.layout.Validate();
             EnsureDocument();
             Build(body ?? new VisualElement());
+            runtimeTooltip =
+                DeucarianRuntimeTooltipPresenter.CreateForDocument(
+                    host,
+                    Document);
+            runtimeTooltip.Bind(Button);
+            runtimeTooltip.BindTree(Body);
             inputGuard = this.layout.BindInputGuard?.Invoke(Root);
             buttonInteraction.Bind(Button, ApplyTheme);
             Button.clicked += ToggleExpanded;
@@ -71,6 +78,7 @@ namespace Deucarian.UI
             ApplyStateImmediately(false);
             ApplyVisibility();
             ApplyTheme();
+            Document.enabled = host.isActiveAndEnabled;
         }
 
         public event Action<bool> ExpandedChanged;
@@ -89,6 +97,8 @@ namespace Deucarian.UI
         public bool IsExpanded => expanded;
         public bool IsVisible => visible;
         public float ExpansionProgress => expansionProgress;
+        public DeucarianRuntimeTooltipPresenter RuntimeTooltip =>
+            runtimeTooltip;
 
         public void SetExpanded(
             bool value,
@@ -134,10 +144,19 @@ namespace Deucarian.UI
         {
             StopAnimation();
             ApplyStateImmediately(expanded);
+            if (Document != null)
+            {
+                Document.enabled = false;
+            }
         }
 
         public void OnEnable()
         {
+            if (Document != null)
+            {
+                Document.enabled = true;
+            }
+
             ApplyStateImmediately(expanded);
             ApplyVisibility();
             ApplyTheme();
@@ -153,6 +172,8 @@ namespace Deucarian.UI
             StopAnimation();
             UnbindThemeProvider();
             buttonInteraction.Dispose();
+            runtimeTooltip?.Dispose();
+            runtimeTooltip = null;
             inputGuard?.Dispose();
             inputGuard = null;
             if (Button != null)
@@ -212,12 +233,10 @@ namespace Deucarian.UI
 
         private void EnsureDocument()
         {
-            documentObject = new GameObject(DocumentObjectName);
-            documentObject.transform.SetParent(host.transform, false);
-            Document = documentObject.AddComponent<UIDocument>();
-
             PanelSettings settings =
                 DeucarianUIRuntimeAssets.LoadRuntimePanelSettings();
+            documentObject = new GameObject(DocumentObjectName);
+            Document = documentObject.AddComponent<UIDocument>();
             if (settings != null)
             {
                 Document.panelSettings = settings;
@@ -229,6 +248,14 @@ namespace Deucarian.UI
                 runtimePanelSettings.name =
                     "DeucarianMorphingMenuPanelSettings";
                 Document.panelSettings = runtimePanelSettings;
+            }
+
+            UIDocument parentDocument =
+                host.GetComponentInParent<UIDocument>(true);
+            if (parentDocument == null ||
+                parentDocument.panelSettings == Document.panelSettings)
+            {
+                documentObject.transform.SetParent(host.transform, false);
             }
 
             Document.sortingOrder = layout.SortingOrder;
@@ -775,6 +802,15 @@ namespace Deucarian.UI
             ApplyIconPrimitiveTint(MenuIcon, tint);
             ApplyIconPrimitiveTint(CloseIcon, tint);
             layout.ApplyBodyTheme?.Invoke(theme);
+            runtimeTooltip?.ApplyTheme(
+                theme,
+                themeProvider != null
+                    ? themeProvider.CurrentStyle
+                    : null);
+            // Theme styling owns color, scale, and interaction state. The
+            // morph owns icon cross-fade and body presentation, so restore
+            // those values after generic icon styling has run.
+            ApplyBodyPresentation(expansionProgress);
         }
 
         private void AlignButtonToChrome()
