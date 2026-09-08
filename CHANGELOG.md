@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 - Unreleased
+
+- Add independently implemented lazy-follow motion with explicit target, time, dead zones, smoothing and recenter support; no XR Toolkit dependency.
+
 ## 0.2.7 - 2026-08-18
 
 - Added package-owned Settings and Information collapsed-glyph variants plus configurable, runtime-updatable top-right menu insets without changing existing single-menu defaults.
