@@ -6,7 +6,7 @@ Deucarian UI provides reusable runtime UI presentation primitives for Deucarian 
 
 Package ID: `com.deucarian.ui`
 
-Current package version: `0.2.7`.
+Current package version: `0.3.0`.
 
 ## When to use it
 
@@ -178,6 +178,15 @@ Does not own:
 - If sample values do not appear, import the `Frosted Control Island` sample through Unity Package Manager or the Package Installer before looking for the preset.
 - If icons or labels are wrong, keep the mapping in the consuming app; this package provides layout and state primitives, not app command content.
 - If `DeucarianUIRuntime.IsConfigured` is false, configure the document or screen-space canvas through the runtime API instead of assigning PanelSettings or sorting order locally.
+
+## Optional lazy follow
+
+Add **Deucarian > UI > Lazy Follow** to a moving UI object and assign its target
+anchor explicitly. Movement/rotation dead zones and response time control when
+and how it catches up. Use `Recenter()` to snap intentionally.
+`DeucarianLazyFollowState` also accepts an explicit pose and delta time for
+composed presenters and isolated policy tests. No XR Toolkit dependency or
+automatic camera discovery is involved.
 
 ## Validation
 
