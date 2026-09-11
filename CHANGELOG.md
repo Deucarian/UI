@@ -2,6 +2,9 @@
 
 ## 0.3.0 - Unreleased
 
+- Add composable layout-position transitions and a UI Toolkit geometry-offset adapter for smooth list reflow, including mid-motion retargeting and instant mode.
+- Remove the invalid meta file for Unity's ignored `Samples~` folder; sample asset metadata remains intact.
+
 - Add independently implemented lazy-follow motion with explicit target, time, dead zones, smoothing and recenter support; no XR Toolkit dependency.
 
 ## 0.2.7 - 2026-08-18

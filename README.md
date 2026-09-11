@@ -21,6 +21,23 @@ Current package version: `0.3.0`.
 - You need XR world-space pressable controls; use `com.deucarian.xr-ui`.
 - You need app-specific report/media behavior, camera navigation, or toolbar command routing.
 
+## Animated list reflow
+
+Use `DeucarianLayoutTransition` for a stable item's **layout position**, independently of its enter/exit animation. The first placement snaps into place; later targets ease from the current painted position. Repeated targets do not restart movement. The list or UI Binding still owns identities, ordering, creation and removal.
+
+```csharp
+var movement = new DeucarianLayoutTransition();
+// After layout changes, in the same parent coordinate system:
+movement.MoveTo(newLayoutPosition, seconds: 0.18f);
+// While presenting (choose your own time source):
+movement.Advance(Time.unscaledDeltaTime);
+rowRect.anchoredPosition = movement.Current + itemEntranceOffset;
+```
+
+For UI Toolkit, compose `DeucarianUIToolkitReflow` with an element and an offset callback. It observes that element's layout geometry and returns a temporary offset; combine that offset with the item's own motion. Call `Advance`, `Reset` when rebinding/reusing an item, and `Dispose` when the view is released. Parent changes start a fresh placement. It does not modify collection data, restart item lifetimes or own a global update loop.
+
+Use zero duration or `animate: false` for instant/reduced-motion presentation. Opt into reflow where tracking item identity helps users; do not automatically animate initial population, scrolling, recycled virtualized rows or every large-table update. Keep the container anchor stable as its size changes.
+
 ## Install
 
 Install through Unity Package Manager with a Git URL:
