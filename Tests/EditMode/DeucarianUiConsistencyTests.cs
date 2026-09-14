@@ -36,7 +36,10 @@ namespace Deucarian.UI.Tests
                 Assert.IsInstanceOf<ScrollView>(second.Panel);
                 Assert.IsTrue(second.RuntimeTooltip.IsBound(second.Button));
                 using (var resize = GeometryChangedEvent.GetPooled(Rect.zero, new Rect(0, 0, 600, 180)))
+                {
+                    resize.target = second.Root;
                     second.Root.SendEvent(resize);
+                }
                 Assert.LessOrEqual(second.Chrome.style.maxHeight.value.value, 132f,
                     "The expanded menu must leave the configured edge margins in shallow viewports.");
             }
