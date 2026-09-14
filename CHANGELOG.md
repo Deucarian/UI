@@ -2,6 +2,9 @@
 
 ## 0.3.1 - Unreleased
 
+- Add theme-tinted vector chevrons and keep control-island pressed scales level with their resting/hover state.
+- Fit compact tooltips to text and viewport width, avoid visible control stacks, and leave pointer input unobstructed.
+
 - Delegate UI visibility progress and active scheduling to Tweens 0.2.0 while retaining UI presentation profiles and public methods.
 - Preserve reversal, repeated-target callbacks and reentrant completion; release cancelled, disabled or destroyed hosts without stale completion.
 - Honor immediate requests during an active animation and support explicit schedulers for previews.

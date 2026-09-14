@@ -21,12 +21,10 @@ namespace Deucarian.UI
             DeucarianControlIslandElementStyle.ApplyStateClasses(
                 button,
                 state);
-            DeucarianIconButtonStyle.ApplyState(
-                button,
-                icon,
-                ResolveButtonPalette(theme, context),
-                state,
-                DeucarianGlassPanelStyle.ResolveStyle(theme, context));
+            DeucarianIconButtonStyle.ApplyPresentation(button, icon,
+                DeucarianIconButtonStyle.ResolvePresentation(
+                    ResolveButtonPalette(theme, context), state,
+                    DeucarianGlassPanelStyle.ResolveStyle(theme, context), true));
         }
 
         public static void ApplyIconButtonState(
@@ -38,11 +36,10 @@ namespace Deucarian.UI
             DeucarianControlIslandElementStyle.ApplyStateClasses(
                 button,
                 state);
-            DeucarianIconButtonStyle.ApplyButtonState(
-                button,
-                ResolveButtonPalette(theme, context),
-                state,
-                DeucarianGlassPanelStyle.ResolveStyle(theme, context));
+            DeucarianIconButtonStyle.ApplyButtonPresentation(button,
+                DeucarianIconButtonStyle.ResolvePresentation(
+                    ResolveButtonPalette(theme, context), state,
+                    DeucarianGlassPanelStyle.ResolveStyle(theme, context), true));
         }
 
         public static void ApplyAnimatedIconButtonState(
