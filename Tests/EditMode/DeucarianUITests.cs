@@ -138,10 +138,10 @@ namespace Deucarian.UI.Tests
                 Assert.False(overlay.panelSettings.clearDepthStencil);
                 Assert.That(
                     first.Bubble.style.minWidth.value.value,
-                    Is.EqualTo(180f));
+                    Is.EqualTo(24f));
                 Assert.That(
                     first.Bubble.style.minHeight.value.value,
-                    Is.EqualTo(34f));
+                    Is.EqualTo(24f));
                 Assert.That(
                     first.Bubble.parent.parent,
                     Is.SameAs(overlay.rootVisualElement));

@@ -6,7 +6,7 @@ Deucarian UI provides reusable runtime UI presentation primitives for Deucarian 
 
 Package ID: `com.deucarian.ui`
 
-Current package version: `0.3.0`.
+Current package version: `0.3.1`.
 
 ## When to use it
 
@@ -20,6 +20,10 @@ Current package version: `0.3.0`.
 - You need screen routing, modal flow, guards, or back navigation; use `com.deucarian.ui-flow`.
 - You need XR world-space pressable controls; use `com.deucarian.xr-ui`.
 - You need app-specific report/media behavior, camera navigation, or toolbar command routing.
+
+## Visibility motion ownership
+
+UI owns presentation profiles and applies opacity, scale, and offset. `DeucarianVisibilityTransition` preserves the UI API while delegating progress to Tweens. `DeucarianAnimatedVisibility` uses the shared active-only Tweens scheduler, with cancellation on target loss and an explicit scheduler option for editor previews. `animate: false` settles immediately, including during an existing animation. Other UI motion helpers retain their existing contracts.
 
 ## Animated list reflow
 

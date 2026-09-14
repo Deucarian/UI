@@ -1,17 +1,18 @@
 using System;
-using System.Collections;
+using Deucarian.Tweens;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Deucarian.UI
 {
-    public sealed class DeucarianAnimatedVisibility
+    public sealed class DeucarianAnimatedVisibility : ITweenUpdate
     {
         private readonly MonoBehaviour host;
         private readonly VisualElement element;
         private readonly DeucarianMotionProfile profile;
         private readonly DeucarianVisibilityTransition transition;
-        private Coroutine routine;
+        private readonly TweenScheduler scheduler;
+        private TweenHandle handle;
         private Action pendingCompletion;
         private bool hasTarget;
         private bool targetVisible;
@@ -19,15 +20,25 @@ namespace Deucarian.UI
         public DeucarianAnimatedVisibility(
             MonoBehaviour host,
             VisualElement element,
-            DeucarianMotionProfile profile)
+            DeucarianMotionProfile profile) : this(host, element, profile, null)
+        {
+        }
+
+        /// <summary>Supply a scheduler for caller-driven previews; players use the shared runtime by default.</summary>
+        public DeucarianAnimatedVisibility(
+            MonoBehaviour host,
+            VisualElement element,
+            DeucarianMotionProfile profile,
+            TweenScheduler scheduler)
         {
             this.host = host;
             this.element = element;
             this.profile = profile;
+            this.scheduler = scheduler;
             transition = new DeucarianVisibilityTransition(profile);
         }
 
-        public bool IsAnimating => routine != null;
+        public bool IsAnimating => handle.IsActive;
         public float Progress => transition.Progress;
         public bool TargetVisible => hasTarget && targetVisible;
 
@@ -52,9 +63,9 @@ namespace Deucarian.UI
                 return;
             }
 
-            if (hasTarget && targetVisible == visible)
+            if (animate && hasTarget && targetVisible == visible)
             {
-                if (routine != null)
+                if (IsAnimating)
                 {
                     AddPendingCompletion(completed);
                     return;
@@ -71,7 +82,7 @@ namespace Deucarian.UI
             if (!animate ||
                 host == null ||
                 !host.isActiveAndEnabled ||
-                !Application.isPlaying)
+                (scheduler == null && !Application.isPlaying))
             {
                 ApplyImmediate(visible);
                 completed?.Invoke();
@@ -79,17 +90,20 @@ namespace Deucarian.UI
             }
 
             AddPendingCompletion(completed);
-            routine = host.StartCoroutine(Animate(visible));
+            if (visible) element.style.display = DisplayStyle.Flex;
+            if (visible) transition.Show();
+            else transition.Hide();
+            ApplyVisibleProgress(element, profile, transition.Progress);
+            if (transition.IsAnimating)
+                handle = (scheduler ?? TweenRuntime.Scheduler).Schedule(this);
+            else
+                Finish();
         }
 
         public void Stop()
         {
-            if (routine != null && host != null)
-            {
-                host.StopCoroutine(routine);
-            }
-
-            routine = null;
+            handle.Cancel();
+            handle = default;
             pendingCompletion = null;
             hasTarget = false;
         }
@@ -115,36 +129,32 @@ namespace Deucarian.UI
             element.style.translate = new Translate(0f, Length.Percent(offsetY * 100f), 0f);
         }
 
-        private IEnumerator Animate(bool visible)
-        {
-            if (visible)
-            {
-                element.style.display = DisplayStyle.Flex;
-            }
+        bool ITweenUpdate.IsAlive => host != null && host.isActiveAndEnabled && element != null;
 
-            if (visible)
-            {
-                transition.Show();
-            }
+        bool ITweenUpdate.Advance(float scaledSeconds, float unscaledSeconds)
+        {
+            transition.Advance(scaledSeconds);
+            ApplyVisibleProgress(element, profile, transition.Progress);
+            return transition.IsAnimating;
+        }
+
+        void ITweenUpdate.Stopped(TweenHandle stopped, TweenStopReason reason)
+        {
+            if (handle != stopped) return;
+            // The scheduler removes the old registration before callbacks can start new work.
+            handle = default;
+            if (reason == TweenStopReason.Completed)
+                Finish();
             else
             {
-                transition.Hide();
+                pendingCompletion = null;
+                hasTarget = false;
             }
+        }
 
-            ApplyVisibleProgress(element, profile, transition.Progress);
-            while (transition.IsAnimating)
-            {
-                yield return null;
-                transition.Advance(Time.deltaTime);
-                ApplyVisibleProgress(element, profile, transition.Progress);
-            }
-
-            if (!visible)
-            {
-                element.style.display = DisplayStyle.None;
-            }
-
-            routine = null;
+        private void Finish()
+        {
+            if (!targetVisible) element.style.display = DisplayStyle.None;
             Action completed = pendingCompletion;
             pendingCompletion = null;
             completed?.Invoke();

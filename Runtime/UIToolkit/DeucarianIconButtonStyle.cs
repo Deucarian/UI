@@ -236,6 +236,19 @@ namespace Deucarian.UI
             DeucarianIconButtonVisualState state,
             DeucarianThemeStyle style = null)
         {
+            return ResolvePresentation(palette, state, style, false);
+        }
+
+        public static DeucarianIconButtonPresentation ResolvePresentation(
+            DeucarianIconButtonPalette palette,
+            DeucarianIconButtonVisualState state,
+            DeucarianThemeStyle style,
+            bool preservePressedScale)
+        {
+            var scaleState = preservePressedScale && state.Pressed
+                ? new DeucarianIconButtonVisualState(state.Visible, state.Enabled,
+                    state.Selected, state.Hovered, false, state.Focused)
+                : state;
             bool outlined = state.Active || state.Focused || state.Disabled;
             float borderWidth = style != null
                 ? outlined ? Mathf.Max(0f, style.BorderWidth) : NoBorderWidth
@@ -254,8 +267,8 @@ namespace Deucarian.UI
                 palette.ResolveIcon(state),
                 borderColor,
                 borderWidth,
-                ResolveButtonScale(state),
-                ResolveIconScale(state));
+                ResolveButtonScale(scaleState),
+                ResolveIconScale(scaleState));
         }
 
         public static void ApplyPresentation(
@@ -320,6 +333,7 @@ namespace Deucarian.UI
             }
 
             icon.style.unityBackgroundImageTintColor = presentation.Icon;
+            if (icon is DeucarianChevronIcon) icon.MarkDirtyRepaint();
             if (manageVisibility)
             {
                 icon.style.opacity = presentation.Opacity;

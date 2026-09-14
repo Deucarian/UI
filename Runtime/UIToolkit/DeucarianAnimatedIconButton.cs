@@ -64,7 +64,9 @@ namespace Deucarian.UI
         {
             button?.SetEnabled(state.Enabled);
             DeucarianIconButtonPresentation next =
-                DeucarianIconButtonStyle.ResolvePresentation(palette, state, style);
+                DeucarianIconButtonStyle.ResolvePresentation(palette, state, style,
+                    button != null && button.ClassListContains(
+                        DeucarianControlIslandElementStyle.IconButtonClass));
             if (hasTarget && PresentationsMatch(targetPresentation, next))
             {
                 targetState = state;
