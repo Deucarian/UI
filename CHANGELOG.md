@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1 - Unreleased
+
+- Set the explicit target on the synthetic viewport resize in the menu-height regression test so it reaches the registered UI Toolkit callback. Runtime behavior is unchanged.
+
 ## 0.5.0 - Unreleased
 
 - Measure tooltips before placement; keep short hints on one line and anchored to their originating control row. Render menus on the shared semantic overlay with independent lifetimes and scroll constrained content. Share contained text/toggle geometry, automatic foreground contrast and Tweens feedback.
