@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0 - Unreleased
+
+- Use palette foreground candidates for selected controls and every animation frame instead of synthesizing black or white.
+
 ## 0.5.1 - Unreleased
 
 - Set the explicit target on the synthetic viewport resize in the menu-height regression test so it reaches the registered UI Toolkit callback. Runtime behavior is unchanged.

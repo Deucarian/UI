@@ -8,6 +8,54 @@ namespace Deucarian.UI.Tests
     public sealed class DeucarianControlReadabilityTests
     {
         [Test]
+        public void SelectedAndAnimatedControlsUseTheSameTintedSurfaceAndTextFamily()
+        {
+            var dark = new Color(0.2f, 0.27f, 0.32f);
+            var light = new Color(0.91f, 0.94f, 0.96f);
+            var selected = new Color(0.77f, 0.63f, 0.98f);
+            var palette = new DeucarianIconButtonPalette(dark, selected, selected,
+                selected, dark, light, light, light, light, light, dark, selected, true, dark);
+            var idle = DeucarianIconButtonStyle.ResolvePresentation(palette,
+                new DeucarianIconButtonVisualState(true, true, false, false, false, false), null, true);
+            var active = DeucarianIconButtonStyle.ResolvePresentation(palette,
+                new DeucarianIconButtonVisualState(true, true, true, false, false, false), null, true);
+            Assert.That(active.Text, Is.EqualTo(dark));
+            Assert.That(active.Icon, Is.EqualTo(dark));
+            Assert.That(idle.Text, Is.EqualTo(light));
+            for (int frame = 0; frame <= 100; frame++)
+            {
+                var value = DeucarianIconButtonPresentation.Lerp(idle, active, frame / 100f);
+                Assert.That(value.Text, Is.EqualTo(dark).Or.EqualTo(light));
+                Assert.That(value.Icon, Is.EqualTo(dark).Or.EqualTo(light));
+            }
+        }
+
+        [Test]
+        public void LightControlsUseTheExistingLightColourOnADarkSelection()
+        {
+            var dark = new Color(0.13f, 0.22f, 0.28f);
+            var light = new Color(0.88f, 0.93f, 0.97f);
+            var palette = new DeucarianIconButtonPalette(light, dark, dark, dark, light,
+                dark, dark, dark, dark, dark, light, dark, true, light);
+            var selected = DeucarianIconButtonStyle.ResolvePresentation(palette,
+                new DeucarianIconButtonVisualState(true, true, true, false, false, false), null, true);
+            Assert.That(selected.Text, Is.EqualTo(light));
+            Assert.That(selected.Icon, Is.EqualTo(light));
+        }
+
+        [Test]
+        public void ViewerThemeSelectionUsesTheNormalControlSurfaceForDarkForeground()
+        {
+            var theme = DeucarianViewerReferenceThemePreset.Resolve().DefaultTheme;
+            var palette = DeucarianControlIslandTheme.ResolveButtonPalette(theme);
+            var idle = new DeucarianIconButtonVisualState(true, true, false, false, false, false);
+            var selected = new DeucarianIconButtonVisualState(true, true, true, false, false, false);
+            var value = DeucarianIconButtonStyle.ResolvePresentation(palette, selected, null, true);
+            Assert.That(value.Text, Is.EqualTo(palette.ResolveBackground(idle)));
+            Assert.That(value.Icon, Is.EqualTo(palette.ResolveBackground(idle)));
+        }
+
+        [Test]
         public void EveryAnimatedFrameKeepsTextReadableWithoutChangingContainedGeometry()
         {
             var palette = new DeucarianIconButtonPalette(Color.black, Color.gray, Color.white,
