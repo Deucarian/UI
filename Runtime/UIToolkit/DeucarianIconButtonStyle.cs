@@ -88,8 +88,12 @@ namespace Deucarian.UI
 
         public Color ResolveBackground(DeucarianIconButtonVisualState state)
         {
-            Color background = ResolveStateBackground(state);
-            return AutoContrast ? DeucarianForegroundContrast.Composite(background, BackingSurface) : background;
+            return ResolveStateBackground(state);
+        }
+
+        public Color ResolveContrastBackground(DeucarianIconButtonVisualState state)
+        {
+            return DeucarianForegroundContrast.Composite(ResolveBackground(state), BackingSurface);
         }
 
         private Color ResolveStateBackground(DeucarianIconButtonVisualState state)
@@ -116,7 +120,7 @@ namespace Deucarian.UI
         {
             Color preferred = ResolveStateIcon(state);
             return AutoContrast && state.Enabled
-                ? DeucarianForegroundContrast.Resolve(preferred, ResolveBackground(state),
+                ? DeucarianForegroundContrast.Resolve(preferred, ResolveContrastBackground(state),
                     ForegroundPalette, DeucarianForegroundContrast.IconMinimum)
                 : preferred;
         }
@@ -155,14 +159,17 @@ namespace Deucarian.UI
             Vector3 buttonScale,
             Vector3 iconScale,
             bool autoContrast = false,
-            DeucarianForegroundPalette? foregroundPalette = null)
+            DeucarianForegroundPalette? foregroundPalette = null,
+            Color backingSurface = default)
         {
             Visible = visible;
             Opacity = Mathf.Clamp01(opacity);
             Background = background;
             ForegroundPalette = foregroundPalette ?? new DeucarianForegroundPalette(Color.black, Color.white);
-            Text = autoContrast ? DeucarianForegroundContrast.Resolve(text, background, ForegroundPalette) : text;
-            Icon = autoContrast ? DeucarianForegroundContrast.Resolve(icon, background,
+            BackingSurface = backingSurface;
+            Color contrastBackground = DeucarianForegroundContrast.Composite(background, backingSurface);
+            Text = autoContrast ? DeucarianForegroundContrast.Resolve(text, contrastBackground, ForegroundPalette) : text;
+            Icon = autoContrast ? DeucarianForegroundContrast.Resolve(icon, contrastBackground,
                 ForegroundPalette, DeucarianForegroundContrast.IconMinimum) : icon;
             AutoContrast = autoContrast;
             Border = border;
@@ -184,6 +191,8 @@ namespace Deucarian.UI
 
         public DeucarianForegroundPalette ForegroundPalette { get; }
 
+        public Color BackingSurface { get; }
+
         public static DeucarianIconButtonPresentation Lerp(
             DeucarianIconButtonPresentation from,
             DeucarianIconButtonPresentation to,
@@ -201,7 +210,8 @@ namespace Deucarian.UI
                 Vector3.Lerp(from.ButtonScale, to.ButtonScale, t),
                 Vector3.Lerp(from.IconScale, to.IconScale, t),
                 to.AutoContrast,
-                to.ForegroundPalette);
+                to.ForegroundPalette,
+                Color.Lerp(from.BackingSurface, to.BackingSurface, t));
         }
     }
 
@@ -303,7 +313,8 @@ namespace Deucarian.UI
                 preservePressedScale ? Vector3.one : ResolveButtonScale(scaleState),
                 preservePressedScale ? Vector3.one : ResolveIconScale(scaleState),
                 palette.AutoContrast && state.Enabled,
-                palette.ForegroundPalette);
+                palette.ForegroundPalette,
+                palette.BackingSurface);
         }
 
         public static void ApplyPresentation(

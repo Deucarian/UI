@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1 - Unreleased
+
+- Preserve authored transparency on toolbar buttons while computing foreground contrast against the toolbar underneath, including animated states.
+
 ## 0.6.0 - Unreleased
 
 - Use palette foreground candidates for selected controls and every animation frame instead of synthesizing black or white.
