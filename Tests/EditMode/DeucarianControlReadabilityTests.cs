@@ -51,8 +51,11 @@ namespace Deucarian.UI.Tests
             var idle = new DeucarianIconButtonVisualState(true, true, false, false, false, false);
             var selected = new DeucarianIconButtonVisualState(true, true, true, false, false, false);
             var value = DeucarianIconButtonStyle.ResolvePresentation(palette, selected, null, true);
-            Assert.That(value.Text, Is.EqualTo(palette.ResolveBackground(idle)));
-            Assert.That(value.Icon, Is.EqualTo(palette.ResolveBackground(idle)));
+            Assert.That(palette.ResolveBackground(idle).a, Is.Zero);
+            var toolbarSurface = DeucarianForegroundContrast.Composite(
+                palette.ResolveBackground(idle), palette.BackingSurface);
+            Assert.That(value.Text, Is.EqualTo(toolbarSurface));
+            Assert.That(value.Icon, Is.EqualTo(toolbarSurface));
         }
 
         [Test]
