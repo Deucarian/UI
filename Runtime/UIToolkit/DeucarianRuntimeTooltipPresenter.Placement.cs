@@ -110,83 +110,8 @@ namespace Deucarian.UI
             Rect targetBounds,
             Vector2 fallbackAnchor,
             Vector2 viewportSize,
-            Vector2 tooltipSize)
-        {
-            float viewportWidth = Mathf.Max(0f, viewportSize.x);
-            float viewportHeight = Mathf.Max(0f, viewportSize.y);
-            float tooltipWidth = Mathf.Max(0f, tooltipSize.x);
-            float tooltipHeight = Mathf.Max(0f, tooltipSize.y);
-            bool hasTarget = targetBounds.width > 0f &&
-                             targetBounds.height > 0f;
-
-            float left = hasTarget
-                ? targetBounds.center.x - tooltipWidth * 0.5f
-                : fallbackAnchor.x;
-            float top = fallbackAnchor.y;
-            if (hasTarget)
-            {
-                float aboveTop = targetBounds.yMin -
-                                 TargetGap -
-                                 tooltipHeight;
-                float belowTop = targetBounds.yMax + TargetGap;
-                float aboveSpace = targetBounds.yMin - EdgeInset;
-                float belowSpace = viewportHeight -
-                                   EdgeInset -
-                                   targetBounds.yMax;
-                bool fitsAbove = aboveTop >= EdgeInset;
-                bool fitsBelow = belowTop + tooltipHeight <=
-                                 viewportHeight - EdgeInset;
-                bool preferAbove = targetBounds.center.y >=
-                                   viewportHeight * 0.5f;
-
-                if (preferAbove)
-                {
-                    top = fitsAbove || !fitsBelow
-                        ? aboveTop
-                        : belowTop;
-                }
-                else
-                {
-                    top = fitsBelow || !fitsAbove
-                        ? belowTop
-                        : aboveTop;
-                }
-
-                if (!fitsAbove && !fitsBelow)
-                {
-                    top = aboveSpace >= belowSpace
-                        ? aboveTop
-                        : belowTop;
-                }
-            }
-            else if (viewportHeight > 0f &&
-                     top + tooltipHeight + EdgeInset > viewportHeight)
-            {
-                top = fallbackAnchor.y - tooltipHeight - TargetGap;
-            }
-
-            if (viewportWidth > 0f)
-            {
-                left = Mathf.Clamp(
-                    left,
-                    EdgeInset,
-                    Mathf.Max(
-                        EdgeInset,
-                        viewportWidth - tooltipWidth - EdgeInset));
-            }
-
-            if (viewportHeight > 0f)
-            {
-                top = Mathf.Clamp(
-                    top,
-                    EdgeInset,
-                    Mathf.Max(
-                        EdgeInset,
-                        viewportHeight - tooltipHeight - EdgeInset));
-            }
-
-            return new Vector2(left, top);
-        }
+            Vector2 tooltipSize) =>
+            DeucarianTooltipPlacementResolver.Resolve(targetBounds, fallbackAnchor, viewportSize, tooltipSize);
 
         private Rect ResolveTargetBounds()
         {

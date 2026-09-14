@@ -18,8 +18,7 @@ namespace Deucarian.UI
 
         private const long PointerDelayMilliseconds = 420L;
         private const long FocusDelayMilliseconds = 180L;
-        private const float EdgeInset = 10f;
-        private const float TargetGap = 9f;
+        private const float EdgeInset = DeucarianTooltipPlacementResolver.EdgeInset;
         private const float PointerOffsetX = 14f;
         private const float PointerOffsetY = 18f;
         private const float MinimumWidth = 24f;
