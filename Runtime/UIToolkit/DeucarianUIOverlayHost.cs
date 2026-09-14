@@ -80,14 +80,14 @@ namespace Deucarian.UI
                     nameof(role));
             }
 
-            if (!DeucarianUIRuntime.HasCanonicalPanelSettings(sourceDocument))
+            PanelSettings settings = ResolveSourceSettings(sourceDocument);
+            if (settings == null)
             {
                 throw new InvalidOperationException(
                     "The source UIDocument must first be configured through " +
                     "DeucarianUIRuntime.Configure.");
             }
 
-            PanelSettings settings = sourceDocument.panelSettings;
             Scene sourceScene = sourceDocument.gameObject.scene;
             if (!sourceScene.IsValid() || !sourceScene.isLoaded)
             {
@@ -100,6 +100,15 @@ namespace Deucarian.UI
                 role,
                 sourceScene);
             return layer.Acquire(containerName);
+        }
+
+        private static PanelSettings ResolveSourceSettings(UIDocument document)
+        {
+            if (DeucarianUIRuntime.HasCanonicalPanelSettings(document)) return document.panelSettings;
+            foreach (OverlayLayer layer in Layers)
+                if (layer.IsAlive && layer.IsConfigured && layer.Document == document)
+                    return layer.SourcePanelSettings;
+            return null;
         }
 
         private static OverlayLayer FindOrCreate(

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 - Unreleased
+
+- Measure tooltips before placement; keep short hints on one line and anchored to their originating control row. Render menus on the shared semantic overlay with independent lifetimes and scroll constrained content. Share contained text/toggle geometry, automatic foreground contrast and Tweens feedback.
+
 ## 0.4.0 - Unreleased
 
 - Keep contained buttons centred with stable geometry and one reserved outline. Resolve readable foreground colours during theme and interaction transitions. Use Tweens for icon-button motion and icon swaps; keep tooltip corners stable across content sizes.

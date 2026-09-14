@@ -31,6 +31,7 @@ namespace Deucarian.UI
         private readonly DeucarianUIOverlayLease ownedLayer;
         private readonly VisualElement bubble;
         private readonly Label label;
+        private readonly DeucarianTooltipGeometry geometry;
         private readonly List<VisualElement> targets =
             new List<VisualElement>();
         private IVisualElementScheduledItem pendingShow;
@@ -66,13 +67,12 @@ namespace Deucarian.UI
         /// </exception>
         public static DeucarianRuntimeTooltipPresenter CreateForDocument(
             Component context,
-            UIDocument sourceDocument)
+            UIDocument sourceDocument,
+            VisualElement eventRoot = null)
         {
             return new DeucarianRuntimeTooltipPresenter(
                 context,
-                sourceDocument != null
-                    ? sourceDocument.rootVisualElement
-                    : null,
+                eventRoot ?? sourceDocument?.rootVisualElement,
                 sourceDocument != null
                     ? DeucarianUIOverlayHost.Acquire(
                         sourceDocument,
@@ -133,6 +133,7 @@ namespace Deucarian.UI
             label.style.whiteSpace = WhiteSpace.Normal;
             label.style.unityTextAlign = TextAnchor.MiddleLeft;
             bubble.Add(label);
+            geometry = new DeucarianTooltipGeometry(bubble, label);
             bubble.RegisterCallback<GeometryChangedEvent>(
                 OnBubbleGeometryChanged);
             tooltipRoot.Add(bubble);
@@ -220,11 +221,13 @@ namespace Deucarian.UI
                 style,
                 themeContext);
             DeucarianThemeStyle shape = style ?? DeucarianGlassPanelStyle.ResolveStyle(theme, themeContext);
-            float radius = Mathf.Min(shape.CornerRadius, Mathf.Min(MinimumWidth, MinimumHeight) * 0.5f);
+            float radius = DeucarianControlIslandStyle.ResolveNestedCornerRadius(
+                shape.CornerRadius, DeucarianControlIslandProfiles.Resolve(shape).VerticalPadding);
             bubble.style.borderTopLeftRadius = radius;
             bubble.style.borderTopRightRadius = radius;
             bubble.style.borderBottomLeftRadius = radius;
             bubble.style.borderBottomRightRadius = radius;
+            geometry?.Invalidate();
             if (label != null)
             {
                 label.style.color =

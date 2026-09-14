@@ -7,6 +7,7 @@ namespace Deucarian.UI
     public sealed partial class DeucarianRuntimeTooltipPresenter
     {
         private readonly List<VisualElement> controlIslands = new List<VisualElement>();
+        private readonly List<Rect> obstacleBounds = new List<Rect>();
 
         private void CollectControlIslands()
         {
@@ -19,9 +20,7 @@ namespace Deucarian.UI
 
         private Vector2 AvoidControlIslands(Vector2 position, Vector2 viewport, Vector2 size)
         {
-            Rect occupied = default;
-            bool found = false;
-            Rect proposed = new Rect(position, size);
+            obstacleBounds.Clear();
             foreach (var island in controlIslands)
             {
                 if (island.panel == null || !island.visible ||
@@ -30,18 +29,10 @@ namespace Deucarian.UI
                 Vector2 min = TooltipPosition(bounds.min);
                 Vector2 max = TooltipPosition(bounds.max);
                 Rect local = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
-                // Only the same horizontal control stack can obstruct this tooltip.
-                if (local.xMax < proposed.xMin || local.xMin > proposed.xMax) continue;
-                occupied = found
-                    ? Rect.MinMaxRect(Mathf.Min(occupied.xMin, local.xMin),
-                        Mathf.Min(occupied.yMin, local.yMin),
-                        Mathf.Max(occupied.xMax, local.xMax), Mathf.Max(occupied.yMax, local.yMax))
-                    : local;
-                found = true;
+                obstacleBounds.Add(local);
             }
-            return found && proposed.Overlaps(occupied)
-                ? ResolvePlacement(occupied, anchor, viewport, size)
-                : position;
+            return DeucarianTooltipPlacementResolver.AvoidObstacles(
+                position, ResolveTargetBounds(), viewport, size, obstacleBounds);
         }
 
         private void PositionBubble()
@@ -52,11 +43,7 @@ namespace Deucarian.UI
             }
 
             Vector2 viewportSize = ResolveElementSize(tooltipRoot);
-            float availableWidth = Mathf.Max(MinimumWidth, viewportSize.x - 2f * EdgeInset);
-            bubble.style.maxWidth = Mathf.Min(240f, availableWidth);
-            Vector2 bubbleSize = ResolveElementSize(bubble);
-            bubbleSize.x = Mathf.Max(MinimumWidth, bubbleSize.x);
-            bubbleSize.y = Mathf.Max(MinimumHeight, bubbleSize.y);
+            Vector2 bubbleSize = geometry.Measure(viewportSize.x);
             Vector2 position = ResolvePlacement(
                 ResolveTargetBounds(),
                 anchor,
