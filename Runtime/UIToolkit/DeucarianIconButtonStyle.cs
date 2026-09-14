@@ -49,7 +49,8 @@ namespace Deucarian.UI
             Color border,
             Color borderActive,
             bool autoContrast = false,
-            Color backingSurface = default)
+            Color backingSurface = default,
+            DeucarianForegroundPalette? foregroundPalette = null)
         {
             Background = background;
             BackgroundHover = backgroundHover;
@@ -65,6 +66,8 @@ namespace Deucarian.UI
             BorderActive = borderActive;
             AutoContrast = autoContrast;
             BackingSurface = backingSurface;
+            ForegroundPalette = foregroundPalette ?? new DeucarianForegroundPalette(
+                DeucarianForegroundContrast.Composite(background, backingSurface), text);
         }
 
         public Color Background { get; }
@@ -81,6 +84,7 @@ namespace Deucarian.UI
         public Color BorderActive { get; }
         public bool AutoContrast { get; }
         public Color BackingSurface { get; }
+        public DeucarianForegroundPalette ForegroundPalette { get; }
 
         public Color ResolveBackground(DeucarianIconButtonVisualState state)
         {
@@ -112,7 +116,8 @@ namespace Deucarian.UI
         {
             Color preferred = ResolveStateIcon(state);
             return AutoContrast && state.Enabled
-                ? DeucarianForegroundContrast.Resolve(preferred, ResolveBackground(state), DeucarianForegroundContrast.IconMinimum)
+                ? DeucarianForegroundContrast.Resolve(preferred, ResolveBackground(state),
+                    ForegroundPalette, DeucarianForegroundContrast.IconMinimum)
                 : preferred;
         }
 
@@ -149,13 +154,16 @@ namespace Deucarian.UI
             float borderWidth,
             Vector3 buttonScale,
             Vector3 iconScale,
-            bool autoContrast = false)
+            bool autoContrast = false,
+            DeucarianForegroundPalette? foregroundPalette = null)
         {
             Visible = visible;
             Opacity = Mathf.Clamp01(opacity);
             Background = background;
-            Text = autoContrast ? DeucarianForegroundContrast.Resolve(text, background) : text;
-            Icon = autoContrast ? DeucarianForegroundContrast.Resolve(icon, background, DeucarianForegroundContrast.IconMinimum) : icon;
+            ForegroundPalette = foregroundPalette ?? new DeucarianForegroundPalette(Color.black, Color.white);
+            Text = autoContrast ? DeucarianForegroundContrast.Resolve(text, background, ForegroundPalette) : text;
+            Icon = autoContrast ? DeucarianForegroundContrast.Resolve(icon, background,
+                ForegroundPalette, DeucarianForegroundContrast.IconMinimum) : icon;
             AutoContrast = autoContrast;
             Border = border;
             BorderWidth = Mathf.Max(0f, borderWidth);
@@ -174,6 +182,8 @@ namespace Deucarian.UI
         public Vector3 IconScale { get; }
         public bool AutoContrast { get; }
 
+        public DeucarianForegroundPalette ForegroundPalette { get; }
+
         public static DeucarianIconButtonPresentation Lerp(
             DeucarianIconButtonPresentation from,
             DeucarianIconButtonPresentation to,
@@ -190,7 +200,8 @@ namespace Deucarian.UI
                 Mathf.Lerp(from.BorderWidth, to.BorderWidth, t),
                 Vector3.Lerp(from.ButtonScale, to.ButtonScale, t),
                 Vector3.Lerp(from.IconScale, to.IconScale, t),
-                to.AutoContrast);
+                to.AutoContrast,
+                to.ForegroundPalette);
         }
     }
 
@@ -291,7 +302,8 @@ namespace Deucarian.UI
                 preservePressedScale ? (style != null ? style.BorderWidth : ActiveBorderWidth) : borderWidth,
                 preservePressedScale ? Vector3.one : ResolveButtonScale(scaleState),
                 preservePressedScale ? Vector3.one : ResolveIconScale(scaleState),
-                palette.AutoContrast && state.Enabled);
+                palette.AutoContrast && state.Enabled,
+                palette.ForegroundPalette);
         }
 
         public static void ApplyPresentation(

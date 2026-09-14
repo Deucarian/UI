@@ -6,7 +6,7 @@ Deucarian UI provides reusable runtime UI presentation primitives for Deucarian 
 
 Package ID: `com.deucarian.ui`
 
-Current package version: `0.5.1`.
+Current package version: `0.6.0`.
 
 ## When to use it
 
@@ -226,3 +226,7 @@ See [AGENTS.md](AGENTS.md) for ownership, dependency, and validation guidance.
 ## License
 
 See [LICENSE.md](LICENSE.md).
+
+## Palette foregrounds
+
+Control islands reuse the visible normal control surface and primary text colour as the dark/light contrast pair. The same pair travels through icon, text, toggle and animated states. Customize those existing colours in the active palette; no second palette is created. Optional `deucarian.control.foreground-dark` and `deucarian.control.foreground-light` roles in that palette override either candidate. Authored candidates are used exactly, including when neither meets the preferred contrast threshold.

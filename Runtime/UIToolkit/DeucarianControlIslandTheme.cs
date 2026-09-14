@@ -190,7 +190,10 @@ namespace Deucarian.UI
                     DeucarianBuiltinColorRoleIds.UiFocused,
                     selected),
                 autoContrast: true,
-                backingSurface: ResolveGlassPanelBackground(resolvedTheme, context));
+                backingSurface: ResolveGlassPanelBackground(resolvedTheme, context),
+                foregroundPalette: DeucarianForegroundPalette.FromTheme(resolvedTheme,
+                    DeucarianForegroundContrast.Composite(normal,
+                        ResolveGlassPanelBackground(resolvedTheme, context)), text));
         }
 
         public static DeucarianScrubberPalette ResolveScrubberPalette(

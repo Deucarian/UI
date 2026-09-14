@@ -93,7 +93,7 @@ namespace Deucarian.UI.Tests
         }
 
         [Test]
-        public void TextControlsUseContrastWithoutPressedMovementOrExtraBorder()
+        public void TextControlsUsePaletteContrastWithoutPressedMovementOrExtraBorder()
         {
             var button = new Button { text = "Screenshots 4" };
             using (var feedback = new DeucarianControlFeedback(null, button))
@@ -102,8 +102,11 @@ namespace Deucarian.UI.Tests
                 feedback.SetSelected(true);
                 var background = button.style.backgroundColor.value;
                 var foreground = button.style.color.value;
+                var palette = DeucarianControlIslandTheme.ResolveButtonPalette(null).ForegroundPalette;
+                Assert.AreEqual(palette.Dark, foreground);
                 Assert.GreaterOrEqual(Deucarian.Theming.DeucarianForegroundContrast.Ratio(
-                    foreground, background), 4.5f);
+                    foreground, background), Deucarian.Theming.DeucarianForegroundContrast.Ratio(
+                    palette.Light, background));
                 var radius = button.style.borderTopLeftRadius;
                 using (var press = MouseDownEvent.GetPooled(new Event { type = EventType.MouseDown, button = 0 }))
                     button.SendEvent(press);
