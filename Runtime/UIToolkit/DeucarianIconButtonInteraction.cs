@@ -5,7 +5,7 @@ namespace Deucarian.UI
 {
     public sealed class DeucarianIconButtonInteraction : IDisposable
     {
-        private Button button;
+        private VisualElement button;
         private Action changed;
         private EventCallback<MouseEnterEvent> mouseEnter;
         private EventCallback<MouseLeaveEvent> mouseLeave;
@@ -20,7 +20,7 @@ namespace Deucarian.UI
         public bool Pressed { get; private set; }
         public bool Focused { get; private set; }
 
-        public void Bind(Button targetButton, Action changedCallback)
+        public void Bind(VisualElement targetButton, Action changedCallback)
         {
             Unbind();
             if (targetButton == null)

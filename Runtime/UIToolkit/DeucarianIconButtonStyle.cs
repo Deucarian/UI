@@ -201,7 +201,7 @@ namespace Deucarian.UI
         public const float NoBorderWidth = 0f;
 
         public static void ApplyState(
-            Button button,
+            VisualElement button,
             VisualElement icon,
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state)
@@ -213,7 +213,7 @@ namespace Deucarian.UI
         /// Applies icon-button state while resolving outlined states from the supplied theme style.
         /// </summary>
         public static void ApplyState(
-            Button button,
+            VisualElement button,
             VisualElement icon,
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state,
@@ -224,7 +224,7 @@ namespace Deucarian.UI
         }
 
         public static void ApplyButtonState(
-            Button button,
+            VisualElement button,
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state)
         {
@@ -235,14 +235,14 @@ namespace Deucarian.UI
         /// Applies button state while resolving active, focused, and disabled outlines from the supplied theme style.
         /// </summary>
         public static void ApplyButtonState(
-            Button button,
+            VisualElement button,
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state,
             DeucarianThemeStyle style)
         {
             ApplyButtonPresentation(
                 button,
-                ResolvePresentation(palette, state, style));
+                ResolvePresentation(palette, state, style, DeucarianTextControlStyle.IsContained(button)));
         }
 
         public static void ApplyIconState(
@@ -295,7 +295,7 @@ namespace Deucarian.UI
         }
 
         public static void ApplyPresentation(
-            Button button,
+            VisualElement button,
             VisualElement icon,
             DeucarianIconButtonPresentation presentation,
             bool keepDisplayed = false,
@@ -317,7 +317,7 @@ namespace Deucarian.UI
         }
 
         public static void ApplyButtonPresentation(
-            Button button,
+            VisualElement button,
             DeucarianIconButtonPresentation presentation,
             bool keepDisplayed = false,
             bool manageScale = true)
@@ -332,7 +332,7 @@ namespace Deucarian.UI
                 : DisplayStyle.None;
             button.style.opacity = presentation.Opacity;
             button.style.backgroundColor = presentation.Background;
-            if (button.ClassListContains(DeucarianControlIslandElementStyle.IconButtonClass))
+            if (DeucarianTextControlStyle.IsContained(button))
             {
                 button.style.backgroundImage = StyleKeyword.None;
                 button.style.translate = new Translate(0f, 0f, 0f);
@@ -414,7 +414,7 @@ namespace Deucarian.UI
             return new Vector3(scale, scale, 1f);
         }
 
-        private static void SetBorder(Button button, float width, Color color)
+        private static void SetBorder(VisualElement button, float width, Color color)
         {
             button.style.borderLeftWidth = width;
             button.style.borderRightWidth = width;

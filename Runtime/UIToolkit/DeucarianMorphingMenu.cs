@@ -4,6 +4,7 @@ using Deucarian.Common;
 using Deucarian.Theming;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static Deucarian.UI.DeucarianMorphingMenuScaffold;
 
 namespace Deucarian.UI
 {
@@ -44,7 +45,8 @@ namespace Deucarian.UI
             new DeucarianIconButtonInteraction();
         private DeucarianRuntimeTooltipPresenter runtimeTooltip;
         private DeucarianThemeProvider themeProvider;
-        private GameObject documentObject;
+        private DeucarianMenuSurface surface;
+        private float panelHeight;
         private Coroutine morphRoutine;
         private IDisposable inputGuard;
         private bool expanded;
@@ -75,7 +77,7 @@ namespace Deucarian.UI
             runtimeTooltip =
                 DeucarianRuntimeTooltipPresenter.CreateForDocument(
                     host,
-                    Document);
+                    Document, Root);
             runtimeTooltip.Bind(Button);
             runtimeTooltip.BindTree(Body);
             inputGuard = this.layout.BindInputGuard?.Invoke(Root);
@@ -87,7 +89,7 @@ namespace Deucarian.UI
             ApplyStateImmediately(false);
             ApplyVisibility();
             ApplyTheme();
-            Document.enabled = host.isActiveAndEnabled;
+            surface.SetEnabled(host.isActiveAndEnabled);
         }
 
         public event Action<bool> ExpandedChanged;
@@ -204,7 +206,7 @@ namespace Deucarian.UI
             ApplyStateImmediately(expanded);
             if (Document != null)
             {
-                Document.enabled = false;
+                surface.SetEnabled(false);
             }
         }
 
@@ -212,7 +214,7 @@ namespace Deucarian.UI
         {
             if (Document != null)
             {
-                Document.enabled = true;
+                surface.SetEnabled(true);
             }
 
             ApplyStateImmediately(expanded);
@@ -247,11 +249,8 @@ namespace Deucarian.UI
                 Root.RemoveFromHierarchy();
             }
 
-            if (documentObject != null)
-            {
-                UnityObjectUtility.DestroySafely(documentObject);
-                documentObject = null;
-            }
+            surface?.Dispose();
+            surface = null;
 
             isDisposed = true;
         }
@@ -294,24 +293,13 @@ namespace Deucarian.UI
 
         private void EnsureDocument()
         {
-            documentObject = new GameObject(DocumentObjectName);
-            Document = documentObject.AddComponent<UIDocument>();
-            DeucarianUIRuntime.Configure(
-                Document,
-                DeucarianUISurfaceRole.Menu);
-
-            UIDocument parentDocument =
-                host.GetComponentInParent<UIDocument>(true);
-            if (parentDocument == null ||
-                parentDocument.panelSettings == Document.panelSettings)
-            {
-                documentObject.transform.SetParent(host.transform, false);
-            }
+            surface = new DeucarianMenuSurface(host);
+            Document = surface.Document;
         }
 
         private void Build(VisualElement body)
         {
-            VisualElement documentRoot = Document.rootVisualElement;
+            VisualElement documentRoot = surface.Container;
             documentRoot.Clear();
             documentRoot.pickingMode = PickingMode.Ignore;
             ApplyFullScreen(documentRoot);
@@ -331,10 +319,10 @@ namespace Deucarian.UI
             };
             ApplyFullScreen(Root);
             Scrim = CreateScrim();
-            MenuRoot = CreateMenuRoot();
+            MenuRoot = CreateMenuRoot(rightInset, layout.EdgeMargin, layout.MaximumWidth);
             Chrome = CreateChrome();
             ButtonHost = CreateButtonHost();
-            Button = CreateButton();
+            Button = CreateButton(layout.OpenTooltip);
             MenuIcon = BuildCollapsedIcon(collapsedIcon);
             CloseIcon = BuildCloseIcon();
             CloseIcon.style.opacity = 0f;
@@ -347,236 +335,14 @@ namespace Deucarian.UI
 
             Panel = CreatePanel();
             Body = body;
-            Body.style.flexGrow = 1f;
+            Body.style.flexGrow = 0f;
+            Body.style.flexShrink = 0f;
             Panel.Add(Body);
             Chrome.Add(Panel);
             MenuRoot.Add(Chrome);
             Root.Add(Scrim);
             Root.Add(MenuRoot);
             documentRoot.Add(Root);
-        }
-
-        private Button CreateScrim()
-        {
-            Button scrim = new Button
-            {
-                name = ScrimName,
-                tabIndex = -1,
-                text = string.Empty,
-                pickingMode = PickingMode.Ignore
-            };
-            scrim.style.display = DisplayStyle.None;
-            ApplyFullScreen(scrim);
-            scrim.style.backgroundColor = Color.clear;
-            scrim.style.backgroundImage = StyleKeyword.Null;
-            SetBorder(scrim, Color.clear, 0f);
-            return scrim;
-        }
-
-        private VisualElement CreateMenuRoot()
-        {
-            VisualElement root = new VisualElement
-            {
-                name = MenuRootName,
-                pickingMode = PickingMode.Ignore
-            };
-            root.style.position = Position.Absolute;
-            root.style.right = rightInset;
-            root.style.top = layout.EdgeMargin;
-            root.style.width = layout.MaximumWidth;
-            root.style.alignItems = Align.FlexEnd;
-            return root;
-        }
-
-        private static VisualElement CreateChrome()
-        {
-            VisualElement chrome = new VisualElement
-            {
-                name = ChromeName,
-                pickingMode = PickingMode.Position
-            };
-            SetFixedSize(
-                chrome,
-                DeucarianMorphingMenuMotion.CollapsedSize,
-                DeucarianMorphingMenuMotion.CollapsedSize);
-            chrome.style.alignItems = Align.Center;
-            chrome.style.flexDirection = FlexDirection.Column;
-            chrome.style.overflow = Overflow.Hidden;
-            chrome.style.paddingLeft = 0f;
-            chrome.style.paddingRight = 0f;
-            chrome.style.paddingTop = 0f;
-            chrome.style.paddingBottom = 0f;
-            chrome.style.flexGrow = 0f;
-            chrome.style.flexShrink = 0f;
-            return chrome;
-        }
-
-        private static VisualElement CreateButtonHost()
-        {
-            VisualElement buttonHost = new VisualElement
-            {
-                name = ButtonHostName,
-                pickingMode = PickingMode.Ignore
-            };
-            buttonHost.style.alignSelf = Align.FlexEnd;
-            SetFixedSize(
-                buttonHost,
-                DeucarianMorphingMenuMotion.CollapsedSize,
-                DeucarianMorphingMenuMotion.CollapsedSize);
-            buttonHost.style.alignItems = Align.Center;
-            buttonHost.style.justifyContent = Justify.Center;
-            buttonHost.style.flexGrow = 0f;
-            buttonHost.style.flexShrink = 0f;
-            return buttonHost;
-        }
-
-        private Button CreateButton()
-        {
-            Button button = new Button
-            {
-                name = ButtonName,
-                text = string.Empty,
-                tooltip = layout.OpenTooltip,
-                pickingMode = PickingMode.Position
-            };
-            DeucarianControlIslandVisualStyle.AddIconButtonClasses(button);
-            DeucarianControlIslandVisualStyle.ApplyIconButtonLayout(
-                button,
-                DeucarianControlIslandVisualStyle.CompactIconButton);
-            return button;
-        }
-
-        private static VisualElement CreatePanel()
-        {
-            VisualElement panel = new VisualElement
-            {
-                name = PanelName,
-                pickingMode = PickingMode.Ignore
-            };
-            panel.style.display = DisplayStyle.None;
-            panel.style.visibility = Visibility.Hidden;
-            panel.style.opacity = 0f;
-            panel.style.translate = new Translate(
-                0f,
-                DeucarianMorphingMenuMotion.BodyHiddenOffset,
-                0f);
-            panel.style.alignSelf = Align.Stretch;
-            panel.style.paddingLeft = 16f;
-            panel.style.paddingRight = 16f;
-            panel.style.paddingTop = 10f;
-            panel.style.paddingBottom = 14f;
-            panel.style.flexDirection = FlexDirection.Column;
-            return panel;
-        }
-
-        private static VisualElement BuildSettingsIcon()
-        {
-            VisualElement icon = CreateIcon(MenuIconName);
-            for (int i = 0; i < 3; i++)
-            {
-                VisualElement line = new VisualElement
-                {
-                    name = MenuIconLineNamePrefix + i,
-                    pickingMode = PickingMode.Ignore
-                };
-                line.style.position = Position.Absolute;
-                line.style.left = 1f;
-                line.style.right = 1f;
-                line.style.top = 2f + i * 6f;
-                line.style.height = 2f;
-                ApplyRadius(line, 1f);
-                VisualElement knob = new VisualElement
-                {
-                    name = MenuIconKnobNamePrefix + i,
-                    pickingMode = PickingMode.Ignore
-                };
-                knob.style.position = Position.Absolute;
-                knob.style.width = 6f;
-                knob.style.height = 6f;
-                knob.style.top = -2f;
-                knob.style.left = i == 1 ? 0f : 10f;
-                ApplyRadius(knob, 3f);
-                line.Add(knob);
-                icon.Add(line);
-            }
-
-            return icon;
-        }
-
-        private static VisualElement BuildInformationIcon()
-        {
-            VisualElement icon = CreateIcon(InformationIconName);
-            VisualElement dot = new VisualElement
-            {
-                name = InformationIconDotName,
-                pickingMode = PickingMode.Ignore
-            };
-            dot.style.position = Position.Absolute;
-            dot.style.left = 8f;
-            dot.style.top = 2f;
-            dot.style.width = 2f;
-            dot.style.height = 2f;
-            ApplyRadius(dot, 1f);
-            icon.Add(dot);
-
-            VisualElement stem = new VisualElement
-            {
-                name = InformationIconStemName,
-                pickingMode = PickingMode.Ignore
-            };
-            stem.style.position = Position.Absolute;
-            stem.style.left = 8f;
-            stem.style.top = 7f;
-            stem.style.width = 2f;
-            stem.style.height = 9f;
-            ApplyRadius(stem, 1f);
-            icon.Add(stem);
-            return icon;
-        }
-
-        private static VisualElement BuildCollapsedIcon(
-            DeucarianMorphingMenuIcon value)
-        {
-            ValidateCollapsedIcon(value);
-            return value == DeucarianMorphingMenuIcon.Information
-                ? BuildInformationIcon()
-                : BuildSettingsIcon();
-        }
-
-        private static VisualElement BuildCloseIcon()
-        {
-            VisualElement icon = CreateIcon(CloseIconName);
-            for (int i = 0; i < 2; i++)
-            {
-                VisualElement bar = new VisualElement
-                {
-                    name = CloseIconBarNamePrefix + i,
-                    pickingMode = PickingMode.Ignore
-                };
-                bar.style.position = Position.Absolute;
-                bar.style.left = 3f;
-                bar.style.top = 8f;
-                bar.style.width = 12f;
-                bar.style.height = 2f;
-                bar.style.rotate = new Rotate(new Angle(
-                    i == 0 ? 45f : -45f,
-                    AngleUnit.Degree));
-                ApplyRadius(bar, 1f);
-                icon.Add(bar);
-            }
-
-            return icon;
-        }
-
-        private static VisualElement CreateIcon(string name)
-        {
-            VisualElement icon = new VisualElement
-            {
-                name = name,
-                pickingMode = PickingMode.Ignore
-            };
-            DeucarianControlIslandVisualStyle.ApplyCenteredIconLayout(icon);
-            return icon;
         }
 
         private void ToggleExpanded()
@@ -626,9 +392,9 @@ namespace Deucarian.UI
                     Panel.resolvedStyle.height,
                     layout.ExpandedFallbackHeight -
                     DeucarianMorphingMenuMotion.CollapsedSize);
-                targetHeight = Mathf.Max(
+                targetHeight = Mathf.Min(ResolveMaximumHeight(), Mathf.Max(
                     layout.ExpandedFallbackHeight,
-                    DeucarianMorphingMenuMotion.CollapsedSize + bodyHeight);
+                    DeucarianMorphingMenuMotion.CollapsedSize + bodyHeight));
                 Panel.style.visibility = Visibility.Visible;
             }
 
@@ -678,13 +444,13 @@ namespace Deucarian.UI
                 float width = ResolveConfiguredExpandedWidth(
                     ResolvePanelWidth());
                 currentWidth = width;
-                currentHeight = layout.ExpandedFallbackHeight;
+                currentHeight = Mathf.Min(layout.ExpandedFallbackHeight, ResolveMaximumHeight());
                 Chrome.style.width = width;
                 Chrome.style.minWidth = width;
                 Chrome.style.maxWidth = width;
                 Chrome.style.height = StyleKeyword.Auto;
-                Chrome.style.minHeight = layout.ExpandedFallbackHeight;
-                Chrome.style.maxHeight = StyleKeyword.None;
+                Chrome.style.minHeight = currentHeight;
+                Chrome.style.maxHeight = ResolveMaximumHeight();
                 Panel.style.display = DisplayStyle.Flex;
                 Panel.style.visibility = Visibility.Visible;
                 Panel.style.width = StyleKeyword.Auto;
@@ -746,6 +512,7 @@ namespace Deucarian.UI
             }
 
             panelWidth = width;
+            panelHeight = evt.newRect.height;
             MenuRoot.style.width = ResolveConfiguredExpandedWidth(width);
             StopAnimation();
             ApplyStateImmediately(expanded);
@@ -766,6 +533,13 @@ namespace Deucarian.UI
                     layout.EdgeMargin +
                     rightInset,
                     Screen.width);
+        }
+
+        private float ResolveMaximumHeight()
+        {
+            float height = IsFinitePositive(panelHeight) ? panelHeight : Root.contentRect.height;
+            if (!IsFinitePositive(height)) height = Screen.height;
+            return Mathf.Max(DeucarianMorphingMenuMotion.CollapsedSize, height - layout.EdgeMargin * 2f);
         }
 
         private float ResolveConfiguredExpandedWidth(float availableWidth)
@@ -953,56 +727,6 @@ namespace Deucarian.UI
 
             host.StopCoroutine(morphRoutine);
             morphRoutine = null;
-        }
-
-        private static void ApplyFullScreen(VisualElement element)
-        {
-            element.style.position = Position.Absolute;
-            element.style.left = 0f;
-            element.style.right = 0f;
-            element.style.top = 0f;
-            element.style.bottom = 0f;
-            element.style.width = Length.Percent(100f);
-            element.style.height = Length.Percent(100f);
-            element.style.backgroundColor = StyleKeyword.Null;
-        }
-
-        private static void SetFixedSize(
-            VisualElement element,
-            float width,
-            float height)
-        {
-            element.style.width = width;
-            element.style.minWidth = width;
-            element.style.maxWidth = width;
-            element.style.height = height;
-            element.style.minHeight = height;
-            element.style.maxHeight = height;
-        }
-
-        private static void ApplyRadius(
-            VisualElement element,
-            float radius)
-        {
-            element.style.borderTopLeftRadius = radius;
-            element.style.borderTopRightRadius = radius;
-            element.style.borderBottomLeftRadius = radius;
-            element.style.borderBottomRightRadius = radius;
-        }
-
-        private static void SetBorder(
-            VisualElement element,
-            Color color,
-            float width)
-        {
-            element.style.borderLeftWidth = width;
-            element.style.borderRightWidth = width;
-            element.style.borderTopWidth = width;
-            element.style.borderBottomWidth = width;
-            element.style.borderLeftColor = color;
-            element.style.borderRightColor = color;
-            element.style.borderTopColor = color;
-            element.style.borderBottomColor = color;
         }
 
         private static float ResolveRenderedDimension(

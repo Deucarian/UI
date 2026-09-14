@@ -14,7 +14,7 @@ namespace Deucarian.UI
         private const float ComparisonTolerance = 0.0001f;
 
         private readonly MonoBehaviour host;
-        private readonly Button button;
+        private readonly VisualElement button;
         private readonly VisualElement icon;
         private readonly DeucarianMotionProfile profile;
         private readonly bool manageIconVisibility;
@@ -33,7 +33,7 @@ namespace Deucarian.UI
 
         public DeucarianAnimatedIconButton(
             MonoBehaviour host,
-            Button button,
+            VisualElement button,
             VisualElement icon,
             DeucarianMotionProfile profile,
             bool manageIconVisibility = true,
@@ -69,8 +69,7 @@ namespace Deucarian.UI
             button?.SetEnabled(state.Enabled);
             DeucarianIconButtonPresentation next =
                 DeucarianIconButtonStyle.ResolvePresentation(palette, state, style,
-                    button != null && button.ClassListContains(
-                        DeucarianControlIslandElementStyle.IconButtonClass));
+                    DeucarianTextControlStyle.IsContained(button));
             if (hasTarget && PresentationsMatch(targetPresentation, next))
             {
                 targetState = state;
