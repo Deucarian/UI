@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0 - Unreleased
+
+- Keep contained buttons centred with stable geometry and one reserved outline. Resolve readable foreground colours during theme and interaction transitions. Use Tweens for icon-button motion and icon swaps; keep tooltip corners stable across content sizes.
+
 ## 0.3.1 - Unreleased
 
 - Add theme-tinted vector chevrons and keep control-island pressed scales level with their resting/hover state.

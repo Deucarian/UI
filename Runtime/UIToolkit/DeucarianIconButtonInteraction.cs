@@ -13,6 +13,8 @@ namespace Deucarian.UI
         private EventCallback<MouseUpEvent> mouseUp;
         private EventCallback<FocusInEvent> focusIn;
         private EventCallback<FocusOutEvent> focusOut;
+        private EventCallback<PointerDownEvent> pointerDown;
+        private bool pointerFocus;
 
         public bool Hovered { get; private set; }
         public bool Pressed { get; private set; }
@@ -28,6 +30,7 @@ namespace Deucarian.UI
 
             button = targetButton;
             changed = changedCallback;
+            pointerDown = _ => { pointerFocus = true; Focused = false; NotifyChanged(); };
             mouseEnter = _ =>
             {
                 Hovered = true;
@@ -47,6 +50,7 @@ namespace Deucarian.UI
                 }
 
                 Pressed = true;
+                Focused = false;
                 NotifyChanged();
             };
             mouseUp = evt =>
@@ -61,16 +65,18 @@ namespace Deucarian.UI
             };
             focusIn = _ =>
             {
-                Focused = true;
+                Focused = !pointerFocus;
                 NotifyChanged();
             };
             focusOut = _ =>
             {
+                pointerFocus = false;
                 Focused = false;
                 NotifyChanged();
             };
 
             button.RegisterCallback(mouseEnter);
+            button.RegisterCallback(pointerDown, TrickleDown.TrickleDown);
             button.RegisterCallback(mouseLeave);
             button.RegisterCallback(mouseDown);
             button.RegisterCallback(mouseUp);
@@ -83,12 +89,14 @@ namespace Deucarian.UI
             Hovered = false;
             Pressed = false;
             Focused = false;
+            pointerFocus = false;
         }
 
         public void Unbind()
         {
             if (button != null)
             {
+                if (pointerDown != null) button.UnregisterCallback(pointerDown, TrickleDown.TrickleDown);
                 if (mouseEnter != null)
                 {
                     button.UnregisterCallback(mouseEnter);
@@ -128,6 +136,7 @@ namespace Deucarian.UI
             mouseUp = null;
             focusIn = null;
             focusOut = null;
+            pointerDown = null;
             Reset();
         }
 

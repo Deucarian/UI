@@ -174,12 +174,13 @@ namespace Deucarian.UI
             button.style.visibility = Visibility.Visible;
             button.style.opacity = 1f;
             button.style.flexDirection = FlexDirection.Row;
-            button.style.backgroundImage = StyleKeyword.Null;
+            button.style.backgroundImage = StyleKeyword.None;
+            button.style.translate = new Translate(0f, 0f, 0f);
             button.style.fontSize = 0f;
             button.style.whiteSpace = WhiteSpace.NoWrap;
             button.style.unityTextAlign = TextAnchor.MiddleCenter;
             button.style.scale = new Scale(Vector3.one);
-            SetBorderWidth(button, DeucarianIconButtonStyle.NoBorderWidth);
+            SetBorderWidth(button, style != null ? style.BorderWidth : DeucarianIconButtonStyle.ActiveBorderWidth);
         }
 
         public static void ApplyIconButtonLayout(
@@ -210,7 +211,11 @@ namespace Deucarian.UI
                 icon,
                 chrome,
                 chrome.IconAbsoluteCentered);
-            icon.style.marginLeft = 0f;
+            if (!chrome.IconAbsoluteCentered)
+            {
+                icon.style.marginLeft = 0f;
+                icon.style.marginTop = 0f;
+            }
             icon.style.marginRight = 0f;
             icon.style.scale = new Scale(Vector3.one);
         }
