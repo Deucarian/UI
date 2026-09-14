@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 - Unreleased
+
+- Delegate UI visibility progress and active scheduling to Tweens 0.2.0 while retaining UI presentation profiles and public methods.
+- Preserve reversal, repeated-target callbacks and reentrant completion; release cancelled, disabled or destroyed hosts without stale completion.
+- Honor immediate requests during an active animation and support explicit schedulers for previews.
+
 ## 0.3.0 - Unreleased
 
 - Add composable layout-position transitions and a UI Toolkit geometry-offset adapter for smooth list reflow, including mid-motion retargeting and instant mode.

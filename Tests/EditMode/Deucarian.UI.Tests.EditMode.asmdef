@@ -6,7 +6,8 @@
     "Deucarian.Theming",
     "Deucarian.UI",
     "Deucarian.UI.Editor",
-    "UnityEngine.UIElementsModule"
+    "UnityEngine.UIElementsModule",
+    "Deucarian.Tweens"
   ],
   "includePlatforms": [
     "Editor"

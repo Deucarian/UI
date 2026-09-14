@@ -1,5 +1,5 @@
 using System;
-using UnityEngine;
+using Deucarian.Tweens;
 
 namespace Deucarian.UI
 {
@@ -12,144 +12,44 @@ namespace Deucarian.UI
     }
 
     /// <summary>
-    /// Renderer-independent state for a reversible enter/exit transition.
-    /// The consumer chooses the time source and applies <see cref="Progress"/>
-    /// to its own presentation.
+    /// Compatibility adapter for UI motion profiles. Tweens owns reversible progress;
+    /// the consumer chooses the time source and applies it to its presentation.
     /// </summary>
     public sealed class DeucarianVisibilityTransition
     {
-        private const float ProgressEpsilon = 0.0001f;
-
         private readonly DeucarianMotionProfile profile;
-        private float startProgress;
-        private float targetProgress;
-        private float elapsedSeconds;
-        private float durationSeconds;
+        private readonly VisibilityProgress transition = new VisibilityProgress();
 
         public DeucarianVisibilityTransition(DeucarianMotionProfile profile)
         {
             this.profile = profile;
-            Reset(false);
+            transition.Completed += _ => Completed?.Invoke(this);
         }
 
         public event Action<DeucarianVisibilityTransition> Completed;
-
         public DeucarianMotionProfile Profile => profile;
-        public float Progress { get; private set; }
-        public DeucarianVisibilityPhase Phase { get; private set; }
-        public bool IsAnimating =>
-            Phase == DeucarianVisibilityPhase.Entering ||
-            Phase == DeucarianVisibilityPhase.Exiting;
-        public bool IsHiding => Phase == DeucarianVisibilityPhase.Exiting;
-        public float RemainingSeconds => IsAnimating
-            ? Mathf.Max(0f, durationSeconds - elapsedSeconds)
-            : 0f;
+        public float Progress => transition.Progress;
+        public DeucarianVisibilityPhase Phase => transition.Phase switch
+        {
+            VisibilityPhase.Entering => DeucarianVisibilityPhase.Entering,
+            VisibilityPhase.Visible => DeucarianVisibilityPhase.Visible,
+            VisibilityPhase.Exiting => DeucarianVisibilityPhase.Exiting,
+            _ => DeucarianVisibilityPhase.Hidden
+        };
+        public bool IsAnimating => transition.IsAnimating;
+        public bool IsHiding => transition.Phase == VisibilityPhase.Exiting;
+        public float RemainingSeconds => transition.RemainingSeconds;
 
         public float Show(bool restartFromHidden = false)
         {
-            if (restartFromHidden)
-            {
-                Reset(false);
-            }
-
-            return StartTransition(1f, profile.EnterSeconds);
+            if (restartFromHidden) transition.Reset(false);
+            return transition.MoveTo(true, profile.EnterSeconds, profile.EnterEasing);
         }
 
-        public float Hide()
-        {
-            return StartTransition(0f, profile.ExitSeconds);
-        }
-
-        /// <summary>
-        /// Advances the active transition by a caller-provided delta.
-        /// Returns true when an active transition was evaluated.
-        /// </summary>
-        public bool Advance(float deltaSeconds)
-        {
-            if (!IsAnimating)
-            {
-                return false;
-            }
-
-            elapsedSeconds += Mathf.Max(0f, deltaSeconds);
-            float linearProgress = durationSeconds <= ProgressEpsilon
-                ? 1f
-                : Mathf.Clamp01(elapsedSeconds / durationSeconds);
-            bool entering = Phase == DeucarianVisibilityPhase.Entering;
-            float easedProgress = profile.Evaluate(entering, linearProgress);
-            Progress = Mathf.Clamp01(Mathf.Lerp(
-                startProgress,
-                targetProgress,
-                easedProgress));
-
-            if (linearProgress >= 1f)
-            {
-                SettleAt(targetProgress, true);
-            }
-
-            return true;
-        }
-
-        public void Complete()
-        {
-            if (IsAnimating)
-            {
-                SettleAt(targetProgress, true);
-            }
-        }
-
-        public void Reset(bool visible)
-        {
-            SettleAt(visible ? 1f : 0f, false);
-        }
-
-        public void SetProgress(float progress)
-        {
-            SettleAt(progress, false);
-        }
-
-        private float StartTransition(float target, float fullDurationSeconds)
-        {
-            startProgress = Progress;
-            targetProgress = Mathf.Clamp01(target);
-            elapsedSeconds = 0f;
-
-            float remainingDistance = Mathf.Abs(targetProgress - startProgress);
-            if (remainingDistance <= ProgressEpsilon)
-            {
-                SettleAt(targetProgress, false);
-                return 0f;
-            }
-
-            durationSeconds = Mathf.Max(0f, fullDurationSeconds) * remainingDistance;
-            Phase = targetProgress > startProgress
-                ? DeucarianVisibilityPhase.Entering
-                : DeucarianVisibilityPhase.Exiting;
-
-            if (durationSeconds <= ProgressEpsilon)
-            {
-                SettleAt(targetProgress, true);
-                return 0f;
-            }
-
-            return durationSeconds;
-        }
-
-        private void SettleAt(float progress, bool notifyCompletion)
-        {
-            Progress = Mathf.Clamp01(progress);
-            startProgress = Progress;
-            targetProgress = Progress;
-            elapsedSeconds = 0f;
-            durationSeconds = 0f;
-            Phase = Progress <= ProgressEpsilon
-                ? DeucarianVisibilityPhase.Hidden
-                : DeucarianVisibilityPhase.Visible;
-
-            if (notifyCompletion)
-            {
-                Completed?.Invoke(this);
-            }
-        }
+        public float Hide() => transition.MoveTo(false, profile.ExitSeconds, profile.ExitEasing);
+        public bool Advance(float deltaSeconds) => transition.Advance(deltaSeconds);
+        public void Complete() => transition.Complete();
+        public void Reset(bool visible) => transition.Reset(visible);
+        public void SetProgress(float progress) => transition.SetProgress(progress);
     }
 }
