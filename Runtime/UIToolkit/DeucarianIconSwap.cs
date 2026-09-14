@@ -1,16 +1,20 @@
-using System.Collections;
+using Deucarian.Tweens;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Deucarian.UI
 {
-    public sealed class DeucarianIconSwap
+    public sealed class DeucarianIconSwap : ITweenUpdate
     {
         private readonly MonoBehaviour host;
         private readonly VisualElement firstIcon;
         private readonly VisualElement secondIcon;
         private readonly DeucarianMotionProfile profile;
-        private Coroutine routine;
+        private TweenHandle handle;
+        private float startOpacity;
+        private float targetOpacity;
+        private float elapsed;
+        private float duration;
         private bool firstVisible;
         private float firstOpacity;
 
@@ -26,7 +30,7 @@ namespace Deucarian.UI
             this.profile = profile;
         }
 
-        public bool IsAnimating => routine != null;
+        public bool IsAnimating => handle.IsActive;
         public bool FirstVisible => firstVisible;
 
         public void SetFirstVisible(bool visible, bool animate)
@@ -42,17 +46,24 @@ namespace Deucarian.UI
                 return;
             }
 
-            routine = host.StartCoroutine(Animate(visible));
+            startOpacity = firstOpacity;
+            targetOpacity = visible ? 1f : 0f;
+            elapsed = 0f;
+            duration = Mathf.Max(0.0001f, profile.Duration(visible) * Mathf.Abs(targetOpacity - startOpacity));
+            if (firstIcon == null || secondIcon == null)
+            {
+                firstOpacity = targetOpacity;
+                SetImmediate(firstIcon, secondIcon, visible);
+                return;
+            }
+            firstIcon.style.display = secondIcon.style.display = DisplayStyle.Flex;
+            handle = TweenRuntime.Scheduler.Schedule(this);
         }
 
         public void Stop()
         {
-            if (routine != null && host != null)
-            {
-                host.StopCoroutine(routine);
-            }
-
-            routine = null;
+            handle.Cancel();
+            handle = default;
         }
 
         public static void ConfigureIconSlot(VisualElement icon, float buttonSize, float iconSize)
@@ -62,7 +73,8 @@ namespace Deucarian.UI
                 return;
             }
 
-            float offset = (buttonSize - iconSize) * 0.5f;
+            // Centre within the actual content box, including any reserved border.
+            float halfIcon = iconSize * 0.5f;
             icon.style.position = Position.Absolute;
             icon.style.width = iconSize;
             icon.style.height = iconSize;
@@ -70,8 +82,10 @@ namespace Deucarian.UI
             icon.style.minHeight = iconSize;
             icon.style.maxWidth = iconSize;
             icon.style.maxHeight = iconSize;
-            icon.style.left = offset;
-            icon.style.top = offset;
+            icon.style.left = Length.Percent(50f);
+            icon.style.top = Length.Percent(50f);
+            icon.style.marginLeft = -halfIcon;
+            icon.style.marginTop = -halfIcon;
             icon.pickingMode = PickingMode.Ignore;
         }
 
@@ -81,38 +95,25 @@ namespace Deucarian.UI
             SetIcon(secondIcon, !firstVisible, firstVisible ? 0f : 1f);
         }
 
-        private IEnumerator Animate(bool finalFirstVisible)
+        bool ITweenUpdate.IsAlive => host != null && host.isActiveAndEnabled && firstIcon != null && secondIcon != null;
+
+        bool ITweenUpdate.Advance(float scaledSeconds, float unscaledSeconds)
         {
-            if (firstIcon == null || secondIcon == null)
-            {
-                firstOpacity = finalFirstVisible ? 1f : 0f;
-                SetImmediate(firstIcon, secondIcon, finalFirstVisible);
-                routine = null;
-                yield break;
-            }
+            elapsed += unscaledSeconds;
+            firstOpacity = Mathf.Lerp(startOpacity, targetOpacity,
+                profile.Evaluate(firstVisible, Mathf.Clamp01(elapsed / duration)));
+            firstIcon.style.opacity = firstOpacity;
+            secondIcon.style.opacity = 1f - firstOpacity;
+            return elapsed < duration;
+        }
 
-            firstIcon.style.display = DisplayStyle.Flex;
-            secondIcon.style.display = DisplayStyle.Flex;
-            float startOpacity = firstOpacity;
-            float targetOpacity = finalFirstVisible ? 1f : 0f;
-            bool entering = targetOpacity > startOpacity;
-            float duration = Mathf.Max(
-                0.0001f,
-                profile.Duration(entering) * Mathf.Abs(targetOpacity - startOpacity));
-            float elapsed = 0f;
-            while (elapsed < duration)
-            {
-                float eased = profile.Evaluate(entering, elapsed / duration);
-                firstOpacity = Mathf.Lerp(startOpacity, targetOpacity, eased);
-                firstIcon.style.opacity = firstOpacity;
-                secondIcon.style.opacity = 1f - firstOpacity;
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
-
+        void ITweenUpdate.Stopped(TweenHandle stopped, TweenStopReason reason)
+        {
+            if (handle != stopped) return;
+            handle = default;
+            if (reason != TweenStopReason.Completed) return;
             firstOpacity = targetOpacity;
-            SetImmediate(firstIcon, secondIcon, finalFirstVisible);
-            routine = null;
+            SetImmediate(firstIcon, secondIcon, firstVisible);
         }
 
         private static void SetIcon(VisualElement icon, bool visible, float opacity)

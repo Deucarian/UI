@@ -30,10 +30,10 @@ namespace Deucarian.UI.Tests
                     .Within(0.0001f));
             Assert.That(
                 first.style.left.value.value,
-                Is.EqualTo(7f).Within(0.0001f));
+                Is.EqualTo(50f).Within(0.0001f));
             Assert.That(
                 first.style.top.value.value,
-                Is.EqualTo(7f).Within(0.0001f));
+                Is.EqualTo(50f).Within(0.0001f));
         }
 
         [Test]

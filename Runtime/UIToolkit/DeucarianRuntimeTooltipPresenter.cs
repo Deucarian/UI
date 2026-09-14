@@ -219,6 +219,12 @@ namespace Deucarian.UI
                 theme,
                 style,
                 themeContext);
+            DeucarianThemeStyle shape = style ?? DeucarianGlassPanelStyle.ResolveStyle(theme, themeContext);
+            float radius = Mathf.Min(shape.CornerRadius, Mathf.Min(MinimumWidth, MinimumHeight) * 0.5f);
+            bubble.style.borderTopLeftRadius = radius;
+            bubble.style.borderTopRightRadius = radius;
+            bubble.style.borderBottomLeftRadius = radius;
+            bubble.style.borderBottomRightRadius = radius;
             if (label != null)
             {
                 label.style.color =

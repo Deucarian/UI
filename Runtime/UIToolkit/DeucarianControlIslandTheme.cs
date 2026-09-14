@@ -188,7 +188,9 @@ namespace Deucarian.UI
                 ResolveColor(
                     resolvedTheme,
                     DeucarianBuiltinColorRoleIds.UiFocused,
-                    selected));
+                    selected),
+                autoContrast: true,
+                backingSurface: ResolveGlassPanelBackground(resolvedTheme, context));
         }
 
         public static DeucarianScrubberPalette ResolveScrubberPalette(

@@ -276,7 +276,7 @@ namespace Deucarian.UI.Tests
             Assert.That(
                 menu.Button.style.scale.value.value.x,
                 Is.EqualTo(
-                    DeucarianIconButtonStyle.ResolveButtonScale(hovered).x)
+                    1f)
                     .Within(0.0001f));
 
             menu.SetExpanded(true, animate: false);
