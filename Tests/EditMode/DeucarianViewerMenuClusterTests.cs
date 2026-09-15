@@ -282,12 +282,12 @@ namespace Deucarian.UI.Tests
             Assert.IsFalse(cluster.SettingsMenu.IsVisible);
 
             cluster.OnDisable();
-            Assert.IsFalse(cluster.InformationMenu.Document.enabled);
-            Assert.IsFalse(cluster.SettingsMenu.Document.enabled);
+            Assert.AreEqual(DisplayStyle.None, cluster.InformationMenu.Root.parent.style.display.value);
+            Assert.AreEqual(DisplayStyle.None, cluster.SettingsMenu.Root.parent.style.display.value);
             cluster.OnEnable();
             cluster.SetVisible(true);
 
-            Assert.IsTrue(cluster.SettingsMenu.Document.enabled);
+            Assert.AreEqual(DisplayStyle.Flex, cluster.SettingsMenu.Root.parent.style.display.value);
             Assert.IsTrue(cluster.SettingsMenu.IsVisible);
             Assert.IsFalse(cluster.InformationMenu.IsVisible);
             Assert.AreEqual(

@@ -42,10 +42,8 @@ namespace Deucarian.UI.Tests
 
             menu = new DeucarianMorphingMenu(host, body);
 
-            Assert.AreEqual(
-                DeucarianMorphingMenu.DocumentObjectName,
-                menu.Document.gameObject.name);
-            Assert.AreEqual(host.transform, menu.Document.transform.parent);
+            Assert.IsNull(menu.Document.transform.parent,
+                "Menus must render outside the source document hierarchy.");
             Assert.AreSame(
                 menu.Root,
                 menu.Document.rootVisualElement.Q<VisualElement>(
@@ -276,7 +274,7 @@ namespace Deucarian.UI.Tests
             Assert.That(
                 menu.Button.style.scale.value.value.x,
                 Is.EqualTo(
-                    DeucarianIconButtonStyle.ResolveButtonScale(hovered).x)
+                    1f)
                     .Within(0.0001f));
 
             menu.SetExpanded(true, animate: false);
@@ -349,9 +347,9 @@ namespace Deucarian.UI.Tests
                 Assert.AreEqual(77, existingDocument.sortingOrder);
 
                 menu.OnDisable();
-                Assert.IsFalse(menu.Document.enabled);
+                Assert.AreEqual(DisplayStyle.None, menu.Root.parent.style.display.value);
                 menu.OnEnable();
-                Assert.IsTrue(menu.Document.enabled);
+                Assert.AreEqual(DisplayStyle.Flex, menu.Root.parent.style.display.value);
 
                 menu.Dispose();
                 menu = null;
@@ -389,7 +387,7 @@ namespace Deucarian.UI.Tests
                     existingSettings,
                     menu.Document.panelSettings);
                 Assert.IsNull(menu.Document.transform.parent);
-                Assert.IsFalse(menu.Document.enabled);
+                Assert.AreEqual(DisplayStyle.None, menu.Root.parent.style.display.value);
             }
             finally
             {

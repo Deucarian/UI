@@ -195,6 +195,8 @@ namespace Deucarian.UI
             button.style.maxHeight = chrome.Size;
             button.style.marginLeft = chrome.HorizontalMargin;
             button.style.marginRight = chrome.HorizontalMargin;
+            button.style.marginTop = 0f;
+            button.style.marginBottom = 0f;
             button.style.paddingLeft = 0f;
             button.style.paddingRight = 0f;
             button.style.paddingTop = 0f;

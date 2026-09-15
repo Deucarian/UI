@@ -1,6 +1,38 @@
 # Changelog
 
+## 0.6.1 - Unreleased
+
+- Preserve authored transparency on toolbar buttons while computing foreground contrast against the toolbar underneath, including animated states.
+
+## 0.6.0 - Unreleased
+
+- Use palette foreground candidates for selected controls and every animation frame instead of synthesizing black or white.
+
+## 0.5.1 - Unreleased
+
+- Set the explicit target on the synthetic viewport resize in the menu-height regression test so it reaches the registered UI Toolkit callback. Runtime behavior is unchanged.
+
+## 0.5.0 - Unreleased
+
+- Measure tooltips before placement; keep short hints on one line and anchored to their originating control row. Render menus on the shared semantic overlay with independent lifetimes and scroll constrained content. Share contained text/toggle geometry, automatic foreground contrast and Tweens feedback.
+
+## 0.4.0 - Unreleased
+
+- Keep contained buttons centred with stable geometry and one reserved outline. Resolve readable foreground colours during theme and interaction transitions. Use Tweens for icon-button motion and icon swaps; keep tooltip corners stable across content sizes.
+
+## 0.3.1 - Unreleased
+
+- Add theme-tinted vector chevrons and keep control-island pressed scales level with their resting/hover state.
+- Fit compact tooltips to text and viewport width, avoid visible control stacks, and leave pointer input unobstructed.
+
+- Delegate UI visibility progress and active scheduling to Tweens 0.2.0 while retaining UI presentation profiles and public methods.
+- Preserve reversal, repeated-target callbacks and reentrant completion; release cancelled, disabled or destroyed hosts without stale completion.
+- Honor immediate requests during an active animation and support explicit schedulers for previews.
+
 ## 0.3.0 - Unreleased
+
+- Add composable layout-position transitions and a UI Toolkit geometry-offset adapter for smooth list reflow, including mid-motion retargeting and instant mode.
+- Remove the invalid meta file for Unity's ignored `Samples~` folder; sample asset metadata remains intact.
 
 - Add independently implemented lazy-follow motion with explicit target, time, dead zones, smoothing and recenter support; no XR Toolkit dependency.
 

@@ -9,21 +9,20 @@ namespace Deucarian.UI
 {
     /// <summary>
     /// Runtime tooltip surface for player builds, pointer input, and keyboard
-    /// focus. The tooltip blocks world input while remaining non-interactive.
+    /// focus. Tooltips leave pointer interaction with the underlying UI intact.
     /// </summary>
-    public sealed class DeucarianRuntimeTooltipPresenter : IDisposable
+    public sealed partial class DeucarianRuntimeTooltipPresenter : IDisposable
     {
         public const string BubbleName = "DeucarianRuntimeTooltip";
         public const string LabelName = "DeucarianRuntimeTooltipLabel";
 
         private const long PointerDelayMilliseconds = 420L;
         private const long FocusDelayMilliseconds = 180L;
-        private const float EdgeInset = 10f;
-        private const float TargetGap = 9f;
+        private const float EdgeInset = DeucarianTooltipPlacementResolver.EdgeInset;
         private const float PointerOffsetX = 14f;
         private const float PointerOffsetY = 18f;
-        private const float MinimumWidth = 180f;
-        private const float MinimumHeight = 34f;
+        private const float MinimumWidth = 24f;
+        private const float MinimumHeight = 24f;
         private const long PositionTrackingIntervalMilliseconds = 16L;
 
         private readonly Component themeContext;
@@ -32,6 +31,7 @@ namespace Deucarian.UI
         private readonly DeucarianUIOverlayLease ownedLayer;
         private readonly VisualElement bubble;
         private readonly Label label;
+        private readonly DeucarianTooltipGeometry geometry;
         private readonly List<VisualElement> targets =
             new List<VisualElement>();
         private IVisualElementScheduledItem pendingShow;
@@ -67,13 +67,12 @@ namespace Deucarian.UI
         /// </exception>
         public static DeucarianRuntimeTooltipPresenter CreateForDocument(
             Component context,
-            UIDocument sourceDocument)
+            UIDocument sourceDocument,
+            VisualElement eventRoot = null)
         {
             return new DeucarianRuntimeTooltipPresenter(
                 context,
-                sourceDocument != null
-                    ? sourceDocument.rootVisualElement
-                    : null,
+                eventRoot ?? sourceDocument?.rootVisualElement,
                 sourceDocument != null
                     ? DeucarianUIOverlayHost.Acquire(
                         sourceDocument,
@@ -112,17 +111,17 @@ namespace Deucarian.UI
             bubble = new VisualElement
             {
                 name = BubbleName,
-                pickingMode = PickingMode.Position
+                pickingMode = PickingMode.Ignore
             };
             bubble.style.display = DisplayStyle.None;
             bubble.style.position = Position.Absolute;
-            bubble.style.maxWidth = 320f;
+            bubble.style.maxWidth = 240f;
             bubble.style.minWidth = MinimumWidth;
             bubble.style.minHeight = MinimumHeight;
-            bubble.style.paddingLeft = 11f;
-            bubble.style.paddingRight = 11f;
-            bubble.style.paddingTop = 8f;
-            bubble.style.paddingBottom = 8f;
+            bubble.style.paddingLeft = 8f;
+            bubble.style.paddingRight = 8f;
+            bubble.style.paddingTop = 5f;
+            bubble.style.paddingBottom = 5f;
             bubble.style.opacity = 0f;
 
             label = new Label(string.Empty)
@@ -130,10 +129,11 @@ namespace Deucarian.UI
                 name = LabelName,
                 pickingMode = PickingMode.Ignore
             };
-            label.style.fontSize = 12f;
+            label.style.fontSize = 11f;
             label.style.whiteSpace = WhiteSpace.Normal;
             label.style.unityTextAlign = TextAnchor.MiddleLeft;
             bubble.Add(label);
+            geometry = new DeucarianTooltipGeometry(bubble, label);
             bubble.RegisterCallback<GeometryChangedEvent>(
                 OnBubbleGeometryChanged);
             tooltipRoot.Add(bubble);
@@ -220,6 +220,14 @@ namespace Deucarian.UI
                 theme,
                 style,
                 themeContext);
+            DeucarianThemeStyle shape = style ?? DeucarianGlassPanelStyle.ResolveStyle(theme, themeContext);
+            float radius = DeucarianControlIslandStyle.ResolveNestedCornerRadius(
+                shape.CornerRadius, DeucarianControlIslandProfiles.Resolve(shape).VerticalPadding);
+            bubble.style.borderTopLeftRadius = radius;
+            bubble.style.borderTopRightRadius = radius;
+            bubble.style.borderBottomLeftRadius = radius;
+            bubble.style.borderBottomRightRadius = radius;
+            geometry?.Invalidate();
             if (label != null)
             {
                 label.style.color =
@@ -398,6 +406,7 @@ namespace Deucarian.UI
             long delayMilliseconds,
             bool fromFocus)
         {
+            if (pendingTarget != target) Hide();
             CancelPendingShow();
             pendingTarget = target;
             anchorFromFocus = fromFocus;
@@ -419,153 +428,13 @@ namespace Deucarian.UI
             }
 
             label.text = pendingTarget.tooltip;
+            CollectControlIslands();
             bubble.style.display = DisplayStyle.Flex;
             bubble.style.opacity = 1f;
             bubble.BringToFront();
             visible = true;
             PositionBubble();
             StartPositionTracking();
-        }
-
-        private void PositionBubble()
-        {
-            if (!visible || bubble == null || tooltipRoot == null)
-            {
-                return;
-            }
-
-            Vector2 viewportSize = ResolveElementSize(tooltipRoot);
-            Vector2 bubbleSize = ResolveElementSize(bubble);
-            bubbleSize.x = Mathf.Max(MinimumWidth, bubbleSize.x);
-            bubbleSize.y = Mathf.Max(MinimumHeight, bubbleSize.y);
-            Vector2 position = ResolvePlacement(
-                ResolveTargetBounds(),
-                anchor,
-                viewportSize,
-                bubbleSize);
-
-            bubble.style.left = position.x;
-            bubble.style.top = position.y;
-        }
-
-        private void OnBubbleGeometryChanged(GeometryChangedEvent evt)
-        {
-            if (visible)
-            {
-                PositionBubble();
-            }
-        }
-
-        private void OnLayoutGeometryChanged(GeometryChangedEvent evt)
-        {
-            if (visible)
-            {
-                PositionBubble();
-            }
-        }
-
-        private void OnTargetGeometryChanged(GeometryChangedEvent evt)
-        {
-            if (visible && evt.currentTarget == pendingTarget)
-            {
-                PositionBubble();
-            }
-        }
-
-        private void OnTargetDetached(DetachFromPanelEvent evt)
-        {
-            if (evt.currentTarget == pendingTarget)
-            {
-                Hide();
-            }
-        }
-
-        /// <summary>
-        /// Resolves a stable, viewport-clamped tooltip position. Targets in the
-        /// lower half prefer an above placement; targets in the upper half
-        /// prefer below. This keeps the tooltip away from the control it
-        /// describes and from adjacent bottom control islands.
-        /// </summary>
-        public static Vector2 ResolvePlacement(
-            Rect targetBounds,
-            Vector2 fallbackAnchor,
-            Vector2 viewportSize,
-            Vector2 tooltipSize)
-        {
-            float viewportWidth = Mathf.Max(0f, viewportSize.x);
-            float viewportHeight = Mathf.Max(0f, viewportSize.y);
-            float tooltipWidth = Mathf.Max(0f, tooltipSize.x);
-            float tooltipHeight = Mathf.Max(0f, tooltipSize.y);
-            bool hasTarget = targetBounds.width > 0f &&
-                             targetBounds.height > 0f;
-
-            float left = hasTarget
-                ? targetBounds.center.x - tooltipWidth * 0.5f
-                : fallbackAnchor.x;
-            float top = fallbackAnchor.y;
-            if (hasTarget)
-            {
-                float aboveTop = targetBounds.yMin -
-                                 TargetGap -
-                                 tooltipHeight;
-                float belowTop = targetBounds.yMax + TargetGap;
-                float aboveSpace = targetBounds.yMin - EdgeInset;
-                float belowSpace = viewportHeight -
-                                   EdgeInset -
-                                   targetBounds.yMax;
-                bool fitsAbove = aboveTop >= EdgeInset;
-                bool fitsBelow = belowTop + tooltipHeight <=
-                                 viewportHeight - EdgeInset;
-                bool preferAbove = targetBounds.center.y >=
-                                   viewportHeight * 0.5f;
-
-                if (preferAbove)
-                {
-                    top = fitsAbove || !fitsBelow
-                        ? aboveTop
-                        : belowTop;
-                }
-                else
-                {
-                    top = fitsBelow || !fitsAbove
-                        ? belowTop
-                        : aboveTop;
-                }
-
-                if (!fitsAbove && !fitsBelow)
-                {
-                    top = aboveSpace >= belowSpace
-                        ? aboveTop
-                        : belowTop;
-                }
-            }
-            else if (viewportHeight > 0f &&
-                     top + tooltipHeight + EdgeInset > viewportHeight)
-            {
-                top = fallbackAnchor.y - tooltipHeight - TargetGap;
-            }
-
-            if (viewportWidth > 0f)
-            {
-                left = Mathf.Clamp(
-                    left,
-                    EdgeInset,
-                    Mathf.Max(
-                        EdgeInset,
-                        viewportWidth - tooltipWidth - EdgeInset));
-            }
-
-            if (viewportHeight > 0f)
-            {
-                top = Mathf.Clamp(
-                    top,
-                    EdgeInset,
-                    Mathf.Max(
-                        EdgeInset,
-                        viewportHeight - tooltipHeight - EdgeInset));
-            }
-
-            return new Vector2(left, top);
         }
 
         private void Hide()
@@ -632,73 +501,5 @@ namespace Deucarian.UI
             positionTracking?.Pause();
         }
 
-        private Rect ResolveTargetBounds()
-        {
-            if (pendingTarget == null)
-            {
-                return default;
-            }
-
-            Rect worldBounds = pendingTarget.worldBound;
-            Vector2 minimum = TooltipPosition(
-                new Vector2(worldBounds.xMin, worldBounds.yMin));
-            Vector2 maximum = TooltipPosition(
-                new Vector2(worldBounds.xMax, worldBounds.yMax));
-            return Rect.MinMaxRect(
-                Mathf.Min(minimum.x, maximum.x),
-                Mathf.Min(minimum.y, maximum.y),
-                Mathf.Max(minimum.x, maximum.x),
-                Mathf.Max(minimum.y, maximum.y));
-        }
-
-        private Vector2 TooltipPosition(Vector2 panelPosition) =>
-            tooltipRoot != null
-                ? tooltipRoot.WorldToLocal(panelPosition)
-                : panelPosition;
-
-        private static Vector2 ResolveElementSize(VisualElement element)
-        {
-            if (element == null)
-            {
-                return Vector2.zero;
-            }
-
-            float width = ResolveDimension(
-                element.resolvedStyle.width,
-                element.contentRect.width,
-                element.layout.width);
-            float height = ResolveDimension(
-                element.resolvedStyle.height,
-                element.contentRect.height,
-                element.layout.height);
-            return new Vector2(width, height);
-        }
-
-        private static float ResolveDimension(
-            float resolved,
-            float content,
-            float layout)
-        {
-            if (IsUsableDimension(resolved))
-            {
-                return resolved;
-            }
-
-            if (IsUsableDimension(content))
-            {
-                return content;
-            }
-
-            return IsUsableDimension(layout) ? layout : 0f;
-        }
-
-        private static bool IsUsableDimension(float value) =>
-            !float.IsNaN(value) &&
-            !float.IsInfinity(value) &&
-            value > 0f;
-
-        private static bool HasTooltip(VisualElement target) =>
-            target != null &&
-            !string.IsNullOrWhiteSpace(target.tooltip);
     }
 }

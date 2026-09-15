@@ -47,7 +47,10 @@ namespace Deucarian.UI
             Color iconActive,
             Color iconDisabled,
             Color border,
-            Color borderActive)
+            Color borderActive,
+            bool autoContrast = false,
+            Color backingSurface = default,
+            DeucarianForegroundPalette? foregroundPalette = null)
         {
             Background = background;
             BackgroundHover = backgroundHover;
@@ -61,6 +64,10 @@ namespace Deucarian.UI
             IconDisabled = iconDisabled;
             Border = border;
             BorderActive = borderActive;
+            AutoContrast = autoContrast;
+            BackingSurface = backingSurface;
+            ForegroundPalette = foregroundPalette ?? new DeucarianForegroundPalette(
+                DeucarianForegroundContrast.Composite(background, backingSurface), text);
         }
 
         public Color Background { get; }
@@ -75,8 +82,21 @@ namespace Deucarian.UI
         public Color IconDisabled { get; }
         public Color Border { get; }
         public Color BorderActive { get; }
+        public bool AutoContrast { get; }
+        public Color BackingSurface { get; }
+        public DeucarianForegroundPalette ForegroundPalette { get; }
 
         public Color ResolveBackground(DeucarianIconButtonVisualState state)
+        {
+            return ResolveStateBackground(state);
+        }
+
+        public Color ResolveContrastBackground(DeucarianIconButtonVisualState state)
+        {
+            return DeucarianForegroundContrast.Composite(ResolveBackground(state), BackingSurface);
+        }
+
+        private Color ResolveStateBackground(DeucarianIconButtonVisualState state)
         {
             if (!state.Visible || !state.Enabled)
             {
@@ -97,6 +117,15 @@ namespace Deucarian.UI
         }
 
         public Color ResolveIcon(DeucarianIconButtonVisualState state)
+        {
+            Color preferred = ResolveStateIcon(state);
+            return AutoContrast && state.Enabled
+                ? DeucarianForegroundContrast.Resolve(preferred, ResolveContrastBackground(state),
+                    ForegroundPalette, DeucarianForegroundContrast.IconMinimum)
+                : preferred;
+        }
+
+        private Color ResolveStateIcon(DeucarianIconButtonVisualState state)
         {
             if (!state.Visible || !state.Enabled)
             {
@@ -128,13 +157,21 @@ namespace Deucarian.UI
             Color border,
             float borderWidth,
             Vector3 buttonScale,
-            Vector3 iconScale)
+            Vector3 iconScale,
+            bool autoContrast = false,
+            DeucarianForegroundPalette? foregroundPalette = null,
+            Color backingSurface = default)
         {
             Visible = visible;
             Opacity = Mathf.Clamp01(opacity);
             Background = background;
-            Text = text;
-            Icon = icon;
+            ForegroundPalette = foregroundPalette ?? new DeucarianForegroundPalette(Color.black, Color.white);
+            BackingSurface = backingSurface;
+            Color contrastBackground = DeucarianForegroundContrast.Composite(background, backingSurface);
+            Text = autoContrast ? DeucarianForegroundContrast.Resolve(text, contrastBackground, ForegroundPalette) : text;
+            Icon = autoContrast ? DeucarianForegroundContrast.Resolve(icon, contrastBackground,
+                ForegroundPalette, DeucarianForegroundContrast.IconMinimum) : icon;
+            AutoContrast = autoContrast;
             Border = border;
             BorderWidth = Mathf.Max(0f, borderWidth);
             ButtonScale = buttonScale;
@@ -150,6 +187,11 @@ namespace Deucarian.UI
         public float BorderWidth { get; }
         public Vector3 ButtonScale { get; }
         public Vector3 IconScale { get; }
+        public bool AutoContrast { get; }
+
+        public DeucarianForegroundPalette ForegroundPalette { get; }
+
+        public Color BackingSurface { get; }
 
         public static DeucarianIconButtonPresentation Lerp(
             DeucarianIconButtonPresentation from,
@@ -161,12 +203,15 @@ namespace Deucarian.UI
                 to.Visible,
                 Mathf.Lerp(from.Opacity, to.Opacity, t),
                 Color.Lerp(from.Background, to.Background, t),
-                Color.Lerp(from.Text, to.Text, t),
-                Color.Lerp(from.Icon, to.Icon, t),
+                to.AutoContrast ? to.Text : Color.Lerp(from.Text, to.Text, t),
+                to.AutoContrast ? to.Icon : Color.Lerp(from.Icon, to.Icon, t),
                 Color.Lerp(from.Border, to.Border, t),
                 Mathf.Lerp(from.BorderWidth, to.BorderWidth, t),
                 Vector3.Lerp(from.ButtonScale, to.ButtonScale, t),
-                Vector3.Lerp(from.IconScale, to.IconScale, t));
+                Vector3.Lerp(from.IconScale, to.IconScale, t),
+                to.AutoContrast,
+                to.ForegroundPalette,
+                Color.Lerp(from.BackingSurface, to.BackingSurface, t));
         }
     }
 
@@ -177,7 +222,7 @@ namespace Deucarian.UI
         public const float NoBorderWidth = 0f;
 
         public static void ApplyState(
-            Button button,
+            VisualElement button,
             VisualElement icon,
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state)
@@ -189,7 +234,7 @@ namespace Deucarian.UI
         /// Applies icon-button state while resolving outlined states from the supplied theme style.
         /// </summary>
         public static void ApplyState(
-            Button button,
+            VisualElement button,
             VisualElement icon,
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state,
@@ -200,7 +245,7 @@ namespace Deucarian.UI
         }
 
         public static void ApplyButtonState(
-            Button button,
+            VisualElement button,
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state)
         {
@@ -211,14 +256,14 @@ namespace Deucarian.UI
         /// Applies button state while resolving active, focused, and disabled outlines from the supplied theme style.
         /// </summary>
         public static void ApplyButtonState(
-            Button button,
+            VisualElement button,
             DeucarianIconButtonPalette palette,
             DeucarianIconButtonVisualState state,
             DeucarianThemeStyle style)
         {
             ApplyButtonPresentation(
                 button,
-                ResolvePresentation(palette, state, style));
+                ResolvePresentation(palette, state, style, DeucarianTextControlStyle.IsContained(button)));
         }
 
         public static void ApplyIconState(
@@ -236,6 +281,17 @@ namespace Deucarian.UI
             DeucarianIconButtonVisualState state,
             DeucarianThemeStyle style = null)
         {
+            return ResolvePresentation(palette, state, style, false);
+        }
+
+        public static DeucarianIconButtonPresentation ResolvePresentation(
+            DeucarianIconButtonPalette palette,
+            DeucarianIconButtonVisualState state,
+            DeucarianThemeStyle style,
+            bool preservePressedScale)
+        {
+            // Contained controls keep a fixed silhouette in every interaction state.
+            var scaleState = state;
             bool outlined = state.Active || state.Focused || state.Disabled;
             float borderWidth = style != null
                 ? outlined ? Mathf.Max(0f, style.BorderWidth) : NoBorderWidth
@@ -252,14 +308,17 @@ namespace Deucarian.UI
                 palette.ResolveBackground(state),
                 palette.Text,
                 palette.ResolveIcon(state),
-                borderColor,
-                borderWidth,
-                ResolveButtonScale(state),
-                ResolveIconScale(state));
+                preservePressedScale && !state.Focused ? Color.clear : borderColor,
+                preservePressedScale ? (style != null ? style.BorderWidth : ActiveBorderWidth) : borderWidth,
+                preservePressedScale ? Vector3.one : ResolveButtonScale(scaleState),
+                preservePressedScale ? Vector3.one : ResolveIconScale(scaleState),
+                palette.AutoContrast && state.Enabled,
+                palette.ForegroundPalette,
+                palette.BackingSurface);
         }
 
         public static void ApplyPresentation(
-            Button button,
+            VisualElement button,
             VisualElement icon,
             DeucarianIconButtonPresentation presentation,
             bool keepDisplayed = false,
@@ -281,7 +340,7 @@ namespace Deucarian.UI
         }
 
         public static void ApplyButtonPresentation(
-            Button button,
+            VisualElement button,
             DeucarianIconButtonPresentation presentation,
             bool keepDisplayed = false,
             bool manageScale = true)
@@ -296,6 +355,11 @@ namespace Deucarian.UI
                 : DisplayStyle.None;
             button.style.opacity = presentation.Opacity;
             button.style.backgroundColor = presentation.Background;
+            if (DeucarianTextControlStyle.IsContained(button))
+            {
+                button.style.backgroundImage = StyleKeyword.None;
+                button.style.translate = new Translate(0f, 0f, 0f);
+            }
             button.style.color = presentation.Text;
             if (manageScale)
             {
@@ -320,6 +384,7 @@ namespace Deucarian.UI
             }
 
             icon.style.unityBackgroundImageTintColor = presentation.Icon;
+            if (icon is DeucarianChevronIcon) icon.MarkDirtyRepaint();
             if (manageVisibility)
             {
                 icon.style.opacity = presentation.Opacity;
@@ -372,7 +437,7 @@ namespace Deucarian.UI
             return new Vector3(scale, scale, 1f);
         }
 
-        private static void SetBorder(Button button, float width, Color color)
+        private static void SetBorder(VisualElement button, float width, Color color)
         {
             button.style.borderLeftWidth = width;
             button.style.borderRightWidth = width;

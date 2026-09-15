@@ -28,12 +28,13 @@ screen-space sorting orders.
 
 Allowed dependency shape:
 
-- May depend on Common for approved runtime primitives, Theming for shared color/style concepts, and Unity UI/UI Toolkit modules for presentation primitives.
+- May depend on Common for approved runtime primitives, Theming for shared color/style concepts, Tweens for visibility progress and scheduling, and Unity UI/UI Toolkit modules for presentation primitives.
 
 Required dependencies and why:
 
 - `com.deucarian.common`: approved shared runtime primitive owner.
 - `com.deucarian.theming`: shared theme/style concepts used by the UI presentation primitives.
+- `com.deucarian.tweens`: shared reversible visibility progress and active-only scheduling.
 - `com.unity.modules.uielements`: UI Toolkit primitives.
 - `com.unity.ugui`: uGUI primitives.
 

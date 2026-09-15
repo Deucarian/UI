@@ -1,4 +1,4 @@
-using System.Collections;
+using Deucarian.Tweens;
 using Deucarian.Theming;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,18 +9,22 @@ namespace Deucarian.UI
     /// Animates UI Toolkit icon-button presentation while applying logical
     /// enabled state immediately.
     /// </summary>
-    public sealed class DeucarianAnimatedIconButton
+    public sealed class DeucarianAnimatedIconButton : ITweenUpdate
     {
         private const float ComparisonTolerance = 0.0001f;
 
         private readonly MonoBehaviour host;
-        private readonly Button button;
+        private readonly VisualElement button;
         private readonly VisualElement icon;
         private readonly DeucarianMotionProfile profile;
         private readonly bool manageIconVisibility;
         private readonly bool manageButtonScale;
         private readonly bool manageIconScale;
-        private Coroutine routine;
+        private TweenHandle handle;
+        private DeucarianIconButtonPresentation startPresentation;
+        private bool entering;
+        private float elapsed;
+        private float duration;
         private bool initialized;
         private bool hasTarget;
         private DeucarianIconButtonVisualState targetState;
@@ -29,7 +33,7 @@ namespace Deucarian.UI
 
         public DeucarianAnimatedIconButton(
             MonoBehaviour host,
-            Button button,
+            VisualElement button,
             VisualElement icon,
             DeucarianMotionProfile profile,
             bool manageIconVisibility = true,
@@ -45,7 +49,7 @@ namespace Deucarian.UI
             this.manageIconScale = manageIconScale;
         }
 
-        public bool IsAnimating => routine != null;
+        public bool IsAnimating => handle.IsActive;
         public DeucarianIconButtonVisualState TargetState => targetState;
 
         public void SetState(
@@ -64,7 +68,8 @@ namespace Deucarian.UI
         {
             button?.SetEnabled(state.Enabled);
             DeucarianIconButtonPresentation next =
-                DeucarianIconButtonStyle.ResolvePresentation(palette, state, style);
+                DeucarianIconButtonStyle.ResolvePresentation(palette, state, style,
+                    DeucarianTextControlStyle.IsContained(button));
             if (hasTarget && PresentationsMatch(targetPresentation, next))
             {
                 targetState = state;
@@ -96,18 +101,17 @@ namespace Deucarian.UI
                 return;
             }
 
-            routine = host.StartCoroutine(
-                Animate(currentPresentation, next, entering, duration));
+            startPresentation = currentPresentation;
+            this.entering = entering;
+            this.duration = duration;
+            elapsed = 0f;
+            handle = TweenRuntime.Scheduler.Schedule(this);
         }
 
         public void Stop()
         {
-            if (routine != null && host != null)
-            {
-                host.StopCoroutine(routine);
-            }
-
-            routine = null;
+            handle.Cancel();
+            handle = default;
         }
 
         /// <summary>
@@ -122,33 +126,23 @@ namespace Deucarian.UI
             hasTarget = false;
         }
 
-        private IEnumerator Animate(
-            DeucarianIconButtonPresentation from,
-            DeucarianIconButtonPresentation to,
-            bool entering,
-            float duration)
-        {
-            float elapsed = 0f;
-            while (elapsed < duration)
-            {
-                float linear = Mathf.Clamp01(elapsed / duration);
-                float eased = profile.Evaluate(entering, linear);
-                currentPresentation =
-                    DeucarianIconButtonPresentation.Lerp(from, to, eased);
-                DeucarianIconButtonStyle.ApplyPresentation(
-                    button,
-                    icon,
-                    currentPresentation,
-                    true,
-                    manageIconVisibility,
-                    manageButtonScale,
-                    manageIconScale);
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
+        bool ITweenUpdate.IsAlive => host != null && host.isActiveAndEnabled && button != null;
 
-            ApplyImmediate(to);
-            routine = null;
+        bool ITweenUpdate.Advance(float scaledSeconds, float unscaledSeconds)
+        {
+            elapsed += unscaledSeconds;
+            currentPresentation = DeucarianIconButtonPresentation.Lerp(
+                startPresentation, targetPresentation, profile.Evaluate(entering, Mathf.Clamp01(elapsed / duration)));
+            DeucarianIconButtonStyle.ApplyPresentation(button, icon, currentPresentation,
+                true, manageIconVisibility, manageButtonScale, manageIconScale);
+            return elapsed < duration;
+        }
+
+        void ITweenUpdate.Stopped(TweenHandle stopped, TweenStopReason reason)
+        {
+            if (handle != stopped) return;
+            handle = default;
+            if (reason == TweenStopReason.Completed) ApplyImmediate(targetPresentation);
         }
 
         private void ApplyImmediate(DeucarianIconButtonPresentation presentation)

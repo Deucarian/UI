@@ -6,7 +6,7 @@ Deucarian UI provides reusable runtime UI presentation primitives for Deucarian 
 
 Package ID: `com.deucarian.ui`
 
-Current package version: `0.3.0`.
+Current package version: `0.6.1`.
 
 ## When to use it
 
@@ -20,6 +20,27 @@ Current package version: `0.3.0`.
 - You need screen routing, modal flow, guards, or back navigation; use `com.deucarian.ui-flow`.
 - You need XR world-space pressable controls; use `com.deucarian.xr-ui`.
 - You need app-specific report/media behavior, camera navigation, or toolbar command routing.
+
+## Visibility motion ownership
+
+UI owns presentation profiles and applies opacity, scale, and offset. `DeucarianVisibilityTransition` preserves the UI API while delegating progress to Tweens. `DeucarianAnimatedVisibility` uses the shared active-only Tweens scheduler, with cancellation on target loss and an explicit scheduler option for editor previews. `animate: false` settles immediately, including during an existing animation. Other UI motion helpers retain their existing contracts.
+
+## Animated list reflow
+
+Use `DeucarianLayoutTransition` for a stable item's **layout position**, independently of its enter/exit animation. The first placement snaps into place; later targets ease from the current painted position. Repeated targets do not restart movement. The list or UI Binding still owns identities, ordering, creation and removal.
+
+```csharp
+var movement = new DeucarianLayoutTransition();
+// After layout changes, in the same parent coordinate system:
+movement.MoveTo(newLayoutPosition, seconds: 0.18f);
+// While presenting (choose your own time source):
+movement.Advance(Time.unscaledDeltaTime);
+rowRect.anchoredPosition = movement.Current + itemEntranceOffset;
+```
+
+For UI Toolkit, compose `DeucarianUIToolkitReflow` with an element and an offset callback. It observes that element's layout geometry and returns a temporary offset; combine that offset with the item's own motion. Call `Advance`, `Reset` when rebinding/reusing an item, and `Dispose` when the view is released. Parent changes start a fresh placement. It does not modify collection data, restart item lifetimes or own a global update loop.
+
+Use zero duration or `animate: false` for instant/reduced-motion presentation. Opt into reflow where tracking item identity helps users; do not automatically animate initial population, scrolling, recycled virtualized rows or every large-table update. Keep the container anchor stable as its size changes.
 
 ## Install
 
@@ -205,3 +226,7 @@ See [AGENTS.md](AGENTS.md) for ownership, dependency, and validation guidance.
 ## License
 
 See [LICENSE.md](LICENSE.md).
+
+## Palette foregrounds
+
+Control islands reuse the visible normal control surface and primary text colour as the dark/light contrast pair. The same pair travels through icon, text, toggle and animated states. Customize those existing colours in the active palette; no second palette is created. Optional `deucarian.control.foreground-dark` and `deucarian.control.foreground-light` roles in that palette override either candidate. Authored candidates are used exactly, including when neither meets the preferred contrast threshold.
